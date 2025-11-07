@@ -1,0 +1,10 @@
+'''
+
+ALTER TABLE MEMBER ADD COLUMN lName TEXT;
+ALTER TABLE MEMBER ADD COLUMN fName TEXT;
+UPDATE MEMBER
+SET lName = SUBSTR(Name, 1, 1),
+    fName = SUBSTR(Name, 2);
+'''
+
+alter table MEMBER drop NAME;
