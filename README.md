@@ -13,9 +13,8 @@
 - 後台管理者可以編輯商品，並檢視每筆訂單以及商品銷售圖表。
 
 ## 介面範例
-
 ![image](https://user-images.githubusercontent.com/52253495/226426951-b1ef62d0-56ae-443f-9483-c06524b5fb12.png)
-
+> 點選以下連結體驗系統功能: https://bookstore.tarflow.com/
 ## 安裝
 
 ### 0. 進入終端機
