@@ -8,7 +8,7 @@ api = Blueprint('api', __name__, template_folder='./templates')
 
 login_manager = LoginManager(api)
 login_manager.login_view = 'api.login'
-login_manager.login_message = "請先登入"
+login_manager.login_message = "請先登入好"
 
 class User(UserMixin):
     pass
