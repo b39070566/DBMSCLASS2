@@ -361,7 +361,12 @@ def playerlist():
                 'is_foreign': '*' in p[1] if p[1] else False
             })
 
-        teams.append(team)
+        if keyword:
+            if team['players']:
+                teams.append(team)
+        else:
+            
+            teams.append(team)
 
     return render_template('playerlist.html', teams=teams, keyword=keyword, user=current_user.name)
 
