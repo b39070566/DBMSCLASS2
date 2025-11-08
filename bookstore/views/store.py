@@ -11,7 +11,7 @@ from sqlalchemy import null
 from link import *
 import math
 from base64 import b64encode
-from api.sql import Member, Order_List, Product, Record, Cart, Player, Team
+from api.sql import Member, Order_List, Product, Record, Cart, Player, Team, Game
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
@@ -398,3 +398,59 @@ def playerinfo():
     }
 
     return render_template('playerinfo.html', player=player_info, user=current_user.name)
+
+
+@store.route('/gamelist', methods=['GET'])
+@login_required
+def gamelist():
+    if current_user.role == 'manager':
+        flash('No permission')
+        return redirect(url_for('manager.home'))
+
+    team = request.args.get('team', '').strip()
+    field = request.args.get('field', '').strip()
+    date = request.args.get('date', '').strip()
+
+    # 檢查是否有篩選
+    if team or field or date:
+        games_data = Game.search_games(team=team, field=field, date=date)
+    else:
+        games_data = Game.get_all_games()
+
+    games = []
+    for g in games_data:
+        games.append({
+            'winTeam': g[0],
+            'loseTeam': g[1],
+            'date': g[2],
+            'fName': g[3],
+        })
+
+    return render_template('gamelist.html', games=games, user=current_user.name)
+
+@store.route('/gameinfo')
+@login_required
+def gameinfo():
+    winTeam = request.args.get('winTeam')
+    loseTeam = request.args.get('loseTeam')
+    date = request.args.get('date')
+
+    if not winTeam or not loseTeam or not date:
+        flash('缺少正確比賽資訊參數')
+        return redirect(url_for('bookstore.gamelist'))
+
+    game = Game.get_more_info(winTeam=winTeam, loseTeam=loseTeam, date=date)
+    if not game:
+        flash('查無此比賽紀錄')
+        return redirect(url_for('bookstore.gamelist'))
+    
+    game = game[0]
+    game_info = {
+        'winTeam': game[0],
+        'loseTeam': game[1],
+        'date': game[2],
+        'fName': game[3],
+        'result': game[4],
+    }
+
+    return render_template('gameinfo.html', game=game_info, user=current_user.name)

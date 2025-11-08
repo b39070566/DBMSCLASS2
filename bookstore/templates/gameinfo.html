@@ -1,0 +1,16 @@
+{% extends "frontstage.html" %}
+{% block title %}賽局資訊{% endblock title %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">{{ game.winTeam }} vs. {{ game.loseTeam }}（{{ game.date }}）</h3>
+  <table class="table table-bordered w-75">
+    <tr><th>勝隊</th><td>{{ game.winTeam }}</td></tr>
+    <tr><th>敗隊</th><td>{{ game.loseTeam }}</td></tr>
+    <tr><th>比賽日期</th><td>{{ game.date }}</td></tr>
+    <tr><th>比賽場地</th><td>{{ game.fName }}</td></tr>
+    <tr><th>比賽結果</th><td>{{ game.result }}</td></tr>    
+  </table>
+
+  <a href="{{ url_for('bookstore.gamelist') }}" class="btn btn-outline-success mt-3">返回賽局查詢</a>
+</div>
+{% endblock content %}

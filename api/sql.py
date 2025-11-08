@@ -315,3 +315,53 @@ class Player:
         return DB.fetchone(sql, (tName, pNo))
 
 
+class Game:
+    @staticmethod
+    def get_all_games():
+        sql = '''
+            SELECT winTeam, loseTeam, date, fName
+            FROM game
+            ORDER BY date DESC
+        '''
+        return DB.fetchall(sql)
+
+    @staticmethod
+    def search_games(team=None, field=None, date=None):
+        """
+        搜尋比賽資料，可依球隊名稱、球場名稱、比賽日期過濾
+        未填的欄位會忽略
+        """
+        sql = "SELECT winTeam, loseTeam, date, fName FROM game WHERE 1=1"
+        params = []
+
+        # 球隊名稱模糊搜尋
+        if team:
+            sql += " AND (winTeam LIKE %s OR loseTeam LIKE %s)"
+            params.extend([f"%{team}%", f"%{team}%"])
+
+        # 球場名稱模糊搜尋
+        if field:
+            sql += " AND fName LIKE %s"
+            params.append(f"%{field}%")
+
+        # 比賽日期精確搜尋
+        if date:
+            sql += " AND date = %s"
+            params.append(date)
+
+        sql += " ORDER BY date DESC"
+
+        # 回傳查詢結果
+        return DB.fetchall(sql, tuple(params))
+    
+    @staticmethod
+    def get_more_info(winTeam, loseTeam, date):
+        sql = '''
+            SELECT winTeam, loseTeam, date, fName, result
+            FROM game
+            WHERE winTeam = %s AND loseTeam = %s AND date = %s
+        '''
+        winTeam = f"{winTeam}"
+        loseTeam = f"{loseTeam}"
+        date = f"{date}"
+        return DB.fetchall(sql, (winTeam, loseTeam, date))
