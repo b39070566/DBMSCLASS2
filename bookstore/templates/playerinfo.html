@@ -1,0 +1,17 @@
+{% extends "frontstage.html" %}
+{% block title %}球員資訊{% endblock title %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">{{ player.name }}（{{ player.tName }}）</h3>
+  <table class="table table-bordered w-75">
+    <tr><th>背號</th><td>{{ player.pNo }}</td></tr>
+    <tr><th>生日</th><td>{{ player.birthday }}</td></tr>
+    <tr><th>位置</th><td>{{ player.position }}</td></tr>
+    <tr><th>身高</th><td>{{ player.height }} cm</td></tr>
+    <tr><th>體重</th><td>{{ player.weight }} kg</td></tr>
+    <tr><th>學歷</th><td>{{ player.education }}</td></tr>
+  </table>
+
+  <a href="{{ url_for('bookstore.playerlist') }}" class="btn btn-outline-success mt-3">返回球員名單</a>
+</div>
+{% endblock content %}

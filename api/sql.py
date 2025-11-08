@@ -277,3 +277,41 @@ class Analysis:
     def member_sale_count():
         sql = 'SELECT COUNT(*), member.mid, (member.lname || member.fname) AS name FROM order_list, member WHERE order_list.mid = member.mid AND member.identity = %s GROUP BY member.mid, member.lname, member.fname ORDER BY COUNT(*) DESC'
         return DB.fetchall(sql, ('user',))
+
+class Team:
+    @staticmethod
+    def get_all_team():
+        sql = 'SELECT tname FROM team ORDER BY tname'
+        return DB.fetchall(sql)
+
+
+class Player:
+    @staticmethod
+    def get_players_by_team(tName, keyword=None):
+        if keyword:
+            sql = '''
+                SELECT pno, name, position, height, weight, education
+                FROM player
+                WHERE tname = %s AND name ILIKE %s
+                ORDER BY pno
+            '''
+            return DB.fetchall(sql, (tName, f'%{keyword}%',))
+        else:
+            sql = '''
+                SELECT pno, name, position, height, weight, education
+                FROM player
+                WHERE tname = %s
+                ORDER BY pno
+            '''
+            return DB.fetchall(sql, (tName,))
+
+    @staticmethod
+    def get_player(tName, pNo):
+        sql = '''
+            SELECT tname, pno, name, birthday, height, weight, education, position
+            FROM player
+            WHERE tname = %s AND pno = %s
+        '''
+        return DB.fetchone(sql, (tName, pNo))
+
+

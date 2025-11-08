@@ -11,7 +11,7 @@ from sqlalchemy import null
 from link import *
 import math
 from base64 import b64encode
-from api.sql import Member, Order_List, Product, Record, Cart
+from api.sql import Member, Order_List, Product, Record, Cart, Player, Team
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
@@ -326,3 +326,70 @@ def only_cart():
         product_data.append(product)
 
     return product_data
+
+@store.route('/playerlist', methods=['GET'])
+@login_required
+def playerlist():
+    if current_user.role == 'manager':
+        flash('No permission')
+        return redirect(url_for('manager.home'))
+
+    keyword = request.args.get('keyword', '').strip()
+
+    # 先取得所有隊伍
+    teams_data = Team.get_all_team()
+    teams = []
+
+    for team_row in teams_data:
+        tName = team_row[0]
+        # 依據關鍵字取該隊球員
+        players = Player.get_players_by_team(tName, keyword)
+
+        team = {
+            'name': tName,
+            'players': []
+        }
+
+        for p in players:
+            team['players'].append({
+                'pNo': p[0],
+                'name': p[1] or '未命名球員',
+                'position': p[2],
+                'height': p[3],
+                'weight': p[4],
+                'education': p[5],
+                'is_foreign': '*' in p[1] if p[1] else False
+            })
+
+        teams.append(team)
+
+    return render_template('playerlist.html', teams=teams, keyword=keyword, user=current_user.name)
+
+
+@store.route('/playerinfo')
+@login_required
+def playerinfo():
+    tName = request.args.get('tName')
+    pNo = request.args.get('pNo')
+
+    if not tName or not pNo:
+        flash('缺少球員資訊參數')
+        return redirect(url_for('bookstore.playerlist'))
+
+    player = Player.get_player(tName, pNo)
+    if not player:
+        flash('查無此球員')
+        return redirect(url_for('bookstore.playerlist'))
+
+    player_info = {
+        'tName': player[0],
+        'pNo': player[1],
+        'name': player[2],
+        'birthday': player[3],
+        'height': player[4],
+        'weight': player[5],
+        'education': player[6],
+        'position': player[7]
+    }
+
+    return render_template('playerinfo.html', player=player_info, user=current_user.name)
