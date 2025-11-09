@@ -277,3 +277,35 @@ class Analysis:
     def member_sale_count():
         sql = 'SELECT COUNT(*), member.mid, (member.lname || member.fname) AS name FROM order_list, member WHERE order_list.mid = member.mid AND member.identity = %s GROUP BY member.mid, member.lname, member.fname ORDER BY COUNT(*) DESC'
         return DB.fetchall(sql, ('user',))
+
+#----------------------------------------------
+class Standing:
+    @staticmethod
+    def get_team_standing():
+        sql = '''
+        WITH team_stats AS (
+            SELECT winteam AS team, COUNT(*) AS wins, 0 AS losses
+            FROM game
+            GROUP BY winteam
+            UNION ALL
+            SELECT loseteam AS team, 0 AS wins, COUNT(*) AS losses
+            FROM game
+            GROUP BY loseteam
+        ),
+        summed AS (
+            SELECT team, SUM(wins) AS wins, SUM(losses) AS losses
+            FROM team_stats
+            GROUP BY team
+        ),
+        ranked AS (
+            SELECT team, wins, losses,
+                   ROUND(wins::decimal / NULLIF((wins + losses), 0), 3) AS win_rate,
+                   RANK() OVER (ORDER BY wins DESC) AS rank
+            FROM summed
+        )
+        SELECT team, wins, losses, win_rate,
+               (MAX(wins) OVER() - wins) AS games_behind
+        FROM ranked
+        ORDER BY wins DESC, win_rate DESC;
+        '''
+        return DB.fetchall(sql)
