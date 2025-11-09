@@ -1,0 +1,12 @@
+{% extends "frontstage.html" %}
+
+{% block head %}
+
+<h1>{{ team.tName }}</h1>
+<p>總教練: {{ team.chiefCoach }}</p>
+<p>公司名稱: {{ team.companyName }}</p>
+<p>聯絡電話: {{ team.cPhone }}</p>
+<p>地址: {{ team.cAddress }}</p>
+
+<a href="{{ url_for('team_coaches', team_name=team.tName) }}">教練名單</a>
+<a href="{{ url_for('team_players', team_name=team.tName) }}">球員點將錄</a>
