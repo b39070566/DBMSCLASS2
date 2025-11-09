@@ -1,1 +1,6 @@
-
+<h1>球隊列表</h1>
+<ul>
+  {% for team in teams %}
+    <li><a href="{{ url_for('team_detail', tID=team.tID) }}">{{ team.tName }}</a></li>
+  {% endfor %}
+</ul>
