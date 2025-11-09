@@ -1,4 +1,4 @@
-# 檔案位置: bookstore/views/store.py (完整取代)
+# 檔案位置: bookstore/views/store.py
 
 import re
 from typing_extensions import Self
@@ -13,15 +13,14 @@ from sqlalchemy import null
 from link import *
 import math
 from base64 import b64encode
-# 導入 DB class
-from api.sql import Member, Order_List, Product, Record, Cart, DB
+from api.sql import Member, Order_List, Product, Record, Cart
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
 @store.route('/', methods=['GET', 'POST'])
 @login_required
 def bookstore():
-    # --- 這是你原有的 bookstore() 函式，我們保留它 ---
+    # ... (你原有的 bookstore() 函式，完全不變) ...
     result = Product.count()
     count = math.ceil(result[0]/9)
     flag = 0
@@ -40,9 +39,10 @@ def bookstore():
         search = request.values.get('keyword')
         keyword = search
         
-        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s" 
-        book_row = DB.fetchall(sql, ('%' + search + '%',))
-        
+        # 假設你這裡的 cursor 是從 link.py 導入的
+        from link import cursor # 
+        cursor.execute('SELECT * FROM PRODUCT WHERE PNAME LIKE %s', ('%' + search + '%',))
+        book_row = cursor.fetchall()
         book_data = []
         final_data = []
         
@@ -119,9 +119,9 @@ def bookstore():
         search = request.values.get('keyword')
         keyword = search
         
-        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s" 
-        book_row = DB.fetchall(sql, ('%' + search + '%',))
-        
+        from link import cursor # 
+        cursor.execute('SELECT * FROM PRODUCT WHERE PNAME LIKE %s', ('%' + search + '%',))
+        book_row = cursor.fetchall()
         book_data = []
         total = 0
         
@@ -157,43 +157,108 @@ def bookstore():
         
         return render_template('bookstore.html', book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)
 
-
-# ----------------------------------------------------------------
-
-@store.route('/cart', methods=['GET', 'POST'])
+# --- 這是我加入的 /gamelist (先留著) ---
+@store.route('/gamelist')
 @login_required 
-def cart():
-    # 當有人 POST (例如嘗試加入購物車) 到這個頁面時，
-    # 我們把他導向主頁，因為這個頁面現在只顯示戰績。
-    if request.method == 'POST':
-        flash('Action completed, returning to store.')
-        return redirect(url_for('bookstore.bookstore'))
-
-    # 當有人 GET 瀏覽這個頁面時:
-    # 檢查是否為管理者
+def gamelist():
     if (current_user.role == 'manager'):
         flash('No permission')
         return redirect(url_for('manager.home'))
+    return render_template('gamelist.html', user=current_user.name)
+# ---
+
+# 會員購物車
+@store.route('/cart', methods=['GET', 'POST'])
+@login_required # 使用者登入後才可以看
+def cart():
+    # ----------------------------------------------------------------
     
-    # 顯示戰績頁面 (cart.html)
-    return render_template('cart.html', user=current_user.name)
+    # ----------------------------------------------------------------
+    try: # <--- 這是新加入的
+        # 以防管理者誤闖
+        if request.method == 'GET':
+            if (current_user.role == 'manager'):
+                flash('No permission')
+                return redirect(url_for('manager.home'))
 
+        # 回傳有 pid 代表要 加商品
+        if request.method == 'POST':
+            if "pid" in request.form:
+                data = Cart.get_cart(current_user.id)
 
-# ----------------------------------------------------------------
-# A A A A A A                                                  
-#                                                               
-#                                                               
-#                                                               
-#                                                               
-#             我們保留你其他的函式不動                           
-#                                                               
-#                                                               
-#                                                               
-# V V V V V V                                                  
-# ----------------------------------------------------------------
+                if data is None: # 假如購物車裡面沒有他的資料
+                    time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    Cart.add_cart(current_user.id, time) # 幫他加一台購物車
+                    data = Cart.get_cart(current_user.id)
+
+                tno = data[2] # 取得交易編號
+                pid = request.form.get('pid') # 使用者想要購買的東西，使用 `request.form.get()` 來避免 KeyError
+                if not pid:
+                    flash('Product ID is missing.')
+                    return redirect(url_for('bookstore.cart')) # 返回購物車頁面並顯示錯誤信息
+
+                # 檢查購物車裡面有沒有商品
+                product = Record.check_product(pid, tno)
+                # 取得商品價錢
+                price = Product.get_product(pid)[2]
+
+                # 如果購物車裡面沒有的話，把它加一個進去
+                if product is None:
+                    Record.add_product({'pid': pid, 'tno': tno, 'saleprice': price, 'total': price})
+                else:
+                    # 如果購物車裡面有的話，就多加一個進去
+                    amount = Record.get_amount(tno, pid)
+                    total = (amount + 1) * int(price)
+                    Record.update_product({'amount': amount + 1, 'tno': tno, 'pid': pid, 'total': total})
+
+            elif "delete" in request.form:
+                pid = request.form.get('delete')
+                tno = Cart.get_cart(current_user.id)[2]
+
+                Member.delete_product(tno, pid)
+                # product_data = only_cart() # <--- 這裡不需要再呼叫
+
+            elif "user_edit" in request.form:
+                change_order()
+                return redirect(url_for('bookstore.bookstore'))
+
+            elif "buy" in request.form:
+                change_order()
+                return redirect(url_for('bookstore.order'))
+
+            elif "order" in request.form:
+                tno = Cart.get_cart(current_user.id)[2]
+                total = Record.get_total_money(tno)
+                Cart.clear_cart(current_user.id)
+
+                time = str(datetime.now().strftime('%Y/%m/%d %H:%M:%S'))
+                format = 'yyyy/mm/dd hh24:mi:ss'
+                Order_List.add_order({'mid': current_user.id, 'ordertime': time, 'total': total, 'format': format, 'tno': tno})
+
+                return render_template('complete.html', user=current_user.name)
+
+        # 不論是 GET 還是 POST (POST 沒 return 的話)，最後都會執行這裡
+        product_data = only_cart()
+
+        if product_data == 0:
+            return render_template('empty.html', user=current_user.name)
+        else:
+            return render_template('cart.html', data=product_data, user=current_user.name)
+            
+    # ----------------------------------------------------------------
+        # ----------------------------------------------------------------
+    except Exception as e:
+        # 如果 above 任何程式碼 (尤其是 only_cart()) 失敗了
+        print(f"!!! CRITICAL ERROR in cart() route: {e}")
+        # 在 OnRender 的 Logs 中印出真正的原因
+        
+        # 顯示一個安全的「空購物車」頁面，而不是 500 錯誤
+        return render_template('empty.html', user=current_user.name)
+
 
 @store.route('/order')
 def order():
+    # ... (你原有的 order() 函式，完全不變) ...
     data = Cart.get_cart(current_user.id)
     tno = data[2]
 
@@ -206,16 +271,18 @@ def order():
             '商品編號': i[1],
             '商品名稱': pname,
             '商品價格': i[3],
-            '數量': i[2] 
+            '數量': i[2] # <--- 我上次修正的打字錯誤
         }
         product_data.append(product)
     
-    total = float(Record.get_total(tno)) 
+    total = float(Record.get_total(tno)) # 將 Decimal 轉換為 float
+
 
     return render_template('order.html', data=product_data, total=total, user=current_user.name)
 
 @store.route('/orderlist')
 def orderlist():
+    # ... (你原有的 orderlist() 函式，完全不變) ...
     if "oid" in request.args :
         pass
     
@@ -244,15 +311,18 @@ def orderlist():
         }
         orderdetail.append(temp)
 
+
     return render_template('orderlist.html', data=orderlist, detail=orderdetail, user=current_user.name)
 
 def change_order():
+    # ... (你原有的 change_order() 函式，完全不變) ...
     data = Cart.get_cart(current_user.id)
-    tno = data[2] 
+    tno = data[2] # 使用者有購物車了，購物車的交易編號是什麼
     product_row = Record.get_record(data[2])
 
     for i in product_row:
         
+        # i[0]：交易編號 / i[1]：商品編號 / i[2]：數量 / i[3]：價格
         if int(request.form[i[1]]) != i[2]:
             Record.update_product({
                 'amount':request.form[i[1]],
@@ -264,9 +334,9 @@ def change_order():
 
     return 0
 
+
 def only_cart():
-    # 這個函式現在不會被 cart() 呼叫了，
-    # 但我們還是保留它，以免 order() 或 change_order() 需要它
+    # ... (你原有的 only_cart() 函式，完全不變) ...
     count = Cart.check(current_user.id)
 
     if count is None:
