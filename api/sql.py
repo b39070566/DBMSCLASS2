@@ -347,88 +347,92 @@ class Analysis:
         return DB.fetchall(sql, ('user',))
 
 #----------------------------------------------
+class Team:
+    @staticmethod
+    def get_all_teams():
+        """
+        取得所有球隊 (修正: 透過 LEFT JOIN 取得總教練姓名)
+        """
+        sql = '''
+            SELECT 
+                T.tName, 
+                C.cName AS chiefCoach,  -- 確保這裡將教練姓名別名為 chiefCoach
+                T.companyName, 
+                T.cPhone, 
+                T.cAddress, 
+                T.fName
+            FROM 
+                team T
+            LEFT JOIN 
+                coach C ON T.chiefCoach = C.cNo -- 確保這裡有 LEFT JOIN
+        '''
+        return DB.fetchall(sql)
 
+    @staticmethod
+    def search_teams(tName=None, chiefCoach=None, companyName=None):
+        """
+        搜尋球隊資料，可依球隊名稱、總教練、公司名稱過濾
+        (修正: 透過 LEFT JOIN 取得總教練姓名，並以姓名進行搜尋)
+        """
+        sql = """
+            SELECT 
+                T.tName, 
+                C.cName AS chiefCoach, 
+                T.companyName, 
+                T.cPhone, 
+                T.cAddress, 
+                T.fName
+            FROM 
+                team T
+            LEFT JOIN 
+                coach C ON T.chiefCoach = C.cNo
+            WHERE 1=1
+        """
+        params = []
+
+        if tName:
+            sql += " AND T.tName ILIKE %s"
+            params.append(f"%{tName}%")
+
+        if chiefCoach:
+            # 修正: 搜尋條件需針對教練姓名 (C.cName) 進行
+            sql += " AND C.cName ILIKE %s"
+            params.append(f"%{chiefCoach}%")
+
+        if companyName:
+            sql += " AND T.companyName ILIKE %s"
+            params.append(f"%{companyName}%")
+
+        sql += " ORDER BY T.tName"
+
+        return DB.fetchall(sql, tuple(params))
+
+    @staticmethod
+    def get_team_detail(tName):
+        """
+        取得單一球隊詳細資訊 (修正: 透過 LEFT JOIN 取得總教練姓名)
+        """
+        sql = '''
+            SELECT 
+                T.tName, 
+                C.cName AS chiefCoach,  -- 確保這裡將教練姓名別名為 chiefCoach
+                T.companyName, 
+                T.cPhone, 
+                T.cAddress, 
+                T.fName
+            FROM 
+                team T
+            LEFT JOIN 
+                coach C ON T.chiefCoach = C.cNo -- 確保這裡有 LEFT JOIN
+            WHERE 
+                T.tName = %s
+        '''
+        return DB.fetchone(sql, (tName,))
 
 
 # -------------------------------
 # Team 球隊管理
 # -------------------------------
-class Team:
-    @staticmethod
-    def get_all_team():
-        sql = 'SELECT tname FROM team ORDER BY tname'
-        return DB.fetchall(sql)
-
-    @staticmethod
-    @staticmethod
-    def get_all_teams():
-        sql = '''
-              SELECT t.tname,
-                     c.cname AS chiefcoach_name,
-                     t.companyname,
-                     t.cphone,
-                     t.caddress,
-                     t.fname
-              FROM team t
-                       LEFT JOIN coach c ON t.chiefcoach = c.cno
-              ORDER BY t.tname \
-              '''
-        return DB.fetchall(sql)
-
-    @staticmethod
-    def get_team_detail(tName):
-        sql = '''
-            SELECT tname, chiefcoach, companyname, cphone, caddress, fname
-            FROM team
-            WHERE tname = %s
-        '''
-        return DB.fetchone(sql, (tName,))
-
-    @staticmethod
-    def search_teams(tName=None, chiefCoach=None, companyName=None):
-        sql = "SELECT tname, chiefcoach, companyname, cphone, caddress, fname FROM team WHERE 1=1"
-        params = []
-
-        if tName:
-            sql += " AND tname ILIKE %s"
-            params.append(f"%{tName}%")
-        if chiefCoach:
-            sql += " AND chiefcoach ILIKE %s"
-            params.append(f"%{chiefCoach}%")
-        if companyName:
-            sql += " AND companyname ILIKE %s"
-            params.append(f"%{companyName}%")
-
-        sql += " ORDER BY tname"
-        return DB.fetchall(sql, tuple(params))
-
-    @staticmethod
-    def add_team(data):
-        sql = '''
-            INSERT INTO team (tname, chiefcoach, companyname, cphone, caddress, fname)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        '''
-        DB.execute_input(sql, (
-            data['tName'], data['chiefCoach'], data['companyName'],
-            data['cPhone'], data['cAddress'], data['fName']
-        ))
-
-    @staticmethod
-    def update_team(data):
-        sql = '''
-            UPDATE team
-            SET chiefcoach = %s, companyname = %s, cphone = %s, caddress = %s, fname = %s
-            WHERE tname = %s
-        '''
-        DB.execute_input(sql, (
-            data['chiefCoach'], data['companyName'], data['cPhone'],
-            data['cAddress'], data['fName'], data['tName']
-        ))
-
-    @staticmethod
-    def delete_team(tName):
-        sql = "DELETE FROM team WHERE tname = %s"
-        DB.execute_input(sql, (tName,))
 
 
 # -------------------------------
