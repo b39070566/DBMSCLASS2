@@ -440,3 +440,4 @@ class Game:
         loseTeam = f"{loseTeam}"
         date = f"{date}"
         return DB.fetchall(sql, (winTeam, loseTeam, date))
+
