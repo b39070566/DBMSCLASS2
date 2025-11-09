@@ -16,6 +16,18 @@ from api.sql import Member, Order_List, Product, Record, Cart
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
 @store.route('/', methods=['GET', 'POST'])
+#------------------------------
+@store.route('/gamelist')
+@login_required 
+def gamelist():
+    # 以防管理者誤闖
+    if (current_user.role == 'manager'):
+        flash('No permission')
+        return redirect(url_for('manager.home'))
+    
+    # 這裡會渲染 templates/gamelist.html 並傳入使用者名稱
+    return render_template('gamelist.html', user=current_user.name)
+#------------------------------
 @login_required
 def bookstore():
     result = Product.count()
