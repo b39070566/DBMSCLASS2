@@ -3,6 +3,9 @@ from flask import render_template, Blueprint, redirect, request, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from link import *
 from api.sql import *
+#--------------------------------------
+from api.sql import Standing
+#--------------------------------------
 
 api = Blueprint('api', __name__, template_folder='./templates')
 
@@ -88,3 +91,10 @@ def register():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+#-------------------------------------------
+@api.route('/standing')
+def standing():
+    standings = Standing.get_team_standing()
+    # standings 會是一個 list，每個元素像 ('統一7-ELEVEn獅', 10, 2, 0.833, 0)
+    return render_template('standing.html', standings=standings)
