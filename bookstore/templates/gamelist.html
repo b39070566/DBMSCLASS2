@@ -1,0 +1,87 @@
+{% extends "frontstage.html" %}
+
+{% block head %}
+{{ super() }}
+<style>
+  /* 比賽連結樣式 */
+  a.game-link {
+    color: #000 !important;
+    text-decoration: none !important;
+    transition: color 0.2s ease-in-out;
+  }
+  a.game-link:hover {
+    color: #0a58ca !important;
+    text-decoration: underline !important;
+  }
+
+  /* 區塊排版微調 */
+  .game-section {
+    margin-bottom: 2rem;
+  }
+  .game-title {
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock head %}
+
+{% block title %}CPBL 賽局查詢{% endblock title %}
+
+{% block content %}
+
+<div class="container-xxl py-3">
+  <form method="get" action="{{ url_for('bookstore.gamelist') }}">
+    <div class="row mb-3 align-items-center">
+      <div class="col-md-3 col-sm-12 mb-2">
+        <input type="text" class="form-control" name="team" placeholder="請輸入球隊名稱"
+               value="{{ request.args.get('team', '') }}">
+      </div>
+      <div class="col-md-3 col-sm-12 mb-2">
+        <input type="text" class="form-control" name="field" placeholder="請輸入球場名稱"
+               value="{{ request.args.get('field', '') }}">
+      </div>
+      <div class="col-md-3 col-sm-12 mb-2">
+        <input type="date" class="form-control" name="date"
+               value="{{ request.args.get('date', '') }}">
+      </div>
+      <div class="col-md-3 col-sm-12 mb-2">
+        <button type="submit" class="btn btn-outline-success w-100">搜尋</button>
+      </div>
+    </div>
+  </form>
+
+  {% if games %}
+    <div class="game-section">
+      <h5 class="game-title fw-bold">賽事列表</h5>
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>隊伍1</th>
+            <th>隊伍2</th>
+            <th>球場</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for game in games %}
+          <tr>
+            <td>{{ game.date }}</td>
+            <td>{{ game.winTeam}}</td>
+            <td>{{ game.loseTeam}}</td>
+            <td>{{ game.fName }}</td>
+            <td>
+              <a href="/bookstore/gameinfo?winTeam={{ game.winTeam }}&loseTeam={{ game.loseTeam }}&date={{ game.date.strftime('%Y-%m-%d') }}" class="game-link">更多...</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted fst-italic">目前尚無符合條件的賽事。</p>
+  {% endif %}
+</div>
+
+{% endblock content %}

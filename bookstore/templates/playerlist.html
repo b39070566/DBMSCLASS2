@@ -1,0 +1,75 @@
+{% extends "frontstage.html" %}
+
+{% block head %}
+{{ super() }}
+<style>
+  /* 球員連結樣式 */
+  a.player-link {
+    color: #000 !important;              /* 常態黑色 */
+    text-decoration: none !important;    /* 無底線 */
+    transition: color 0.2s ease-in-out;
+  }
+  a.player-link:hover {
+    color: #0a58ca !important;           /* 滑過時轉藍 */
+    text-decoration: underline !important;
+  }
+
+  /* 區塊排版微調 */
+  .team-section {
+    margin-bottom: 2rem;
+  }
+  .team-title {
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock head %}
+
+{% block title %}CPBL 球員名單{% endblock title %}
+
+{% block content %}
+
+<div class="container-xxl py-3">
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-8 col-sm-12">
+      <p class="mb-0">
+        以下為各球隊球員名單。若要查詢特定球員，請於右方搜尋欄輸入姓名。
+      </p>
+    </div>
+    <div class="col-md-4 col-sm-12">
+      <form method="get" action="{{ url_for('bookstore.playerlist') }}" class="d-flex">
+        <input type="text" class="form-control me-2" name="keyword" placeholder="請輸入球員姓名"
+               value="{{ request.args.get('keyword', '') }}">
+        <button type="submit" class="btn btn-outline-success">搜尋</button>
+      </form>
+    </div>
+  </div>
+  <hr/>
+
+  {% for team in teams %}
+    <div class="team-section">
+      <h5 class="team-title fw-bold">{{ team.name }}</h5>
+
+      {% if team.players %}
+        <ul class="list-inline mb-0">
+          {% for player in team.players %}
+            <li class="list-inline-item mb-1">
+              {% if player.is_foreign %}
+                <span class="text-danger">*</span>
+              {% endif %}
+              <a href="{{ url_for('bookstore.playerinfo', tName=team.name, pNo=player.pNo) }}"
+                 class="player-link">
+                {{ player.name }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted fst-italic">暫無球員</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock content %}

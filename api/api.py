@@ -51,7 +51,7 @@ def login():
             login_user(user)
 
             if( identity == 'user'):
-                return redirect(url_for('bookstore.bookstore'))
+                return redirect(url_for('bookstore.playerlist'))
             else:
                 return redirect(url_for('manager.productManager'))
         
