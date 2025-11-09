@@ -14,7 +14,7 @@ from link import *
 import math
 from base64 import b64encode
 # 導入 DB class
-from api.sql import Member, Order_List, Product, Record, Cart, Player, Team, Game,TeamRecord
+from api.sql import Member, Order_List, Product, Record, Cart, Player, Team, Game,TeamRecord, Coach
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
@@ -25,7 +25,7 @@ def bookstore():
     result = Product.count()
     count = math.ceil(result[0]/9)
     flag = 0
-    
+
     if request.method == 'GET':
         if(current_user.role == 'manager'):
             flash('No permission')
@@ -39,13 +39,13 @@ def bookstore():
         end = page * 9
         search = request.values.get('keyword')
         keyword = search
-        
-        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s" 
+
+        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s"
         book_row = DB.fetchall(sql, ('%' + search + '%',))
-        
+
         book_data = []
         final_data = []
-        
+
         for i in book_row:
             book = {
                 '商品編號': i[0],
@@ -54,29 +54,29 @@ def bookstore():
             }
             book_data.append(book)
             total = total + 1
-        
+
         if(len(book_data) < end):
             end = len(book_data)
             flag = 1
-            
+
         for j in range(start, end):
             final_data.append(book_data[j])
-            
-        count = math.ceil(total/9)
-        
-        return render_template('bookstore.html', single=single, keyword=search, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count) 
 
-    
+        count = math.ceil(total/9)
+
+        return render_template('bookstore.html', single=single, keyword=search, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)
+
+
     elif 'pid' in request.args:
         pid = request.args['pid']
         data = Product.get_product(pid)
-        
+
         pname = data[1]
         price = data[2]
         category = data[3]
         description = data[4]
         image = 'sdg.jpg'
-        
+
         product = {
             '商品編號': pid,
             '商品名稱': pname,
@@ -87,16 +87,16 @@ def bookstore():
         }
 
         return render_template('product.html', data = product, user=current_user.name)
-    
+
     elif 'page' in request.args:
         page = int(request.args['page'])
         start = (page - 1) * 9
         end = page * 9
-        
+
         book_row = Product.get_all_product()
         book_data = []
         final_data = []
-        
+
         for i in book_row:
             book = {
                 '商品編號': i[0],
@@ -104,27 +104,27 @@ def bookstore():
                 '商品價格': i[2]
             }
             book_data.append(book)
-            
+
         if(len(book_data) < end):
             end = len(book_data)
             flag = 1
-            
+
         for j in range(start, end):
             final_data.append(book_data[j])
-        
-        return render_template('bookstore.html', book_data=final_data, user=current_user.name, page=page, flag=flag, count=count) 
-    
+
+        return render_template('bookstore.html', book_data=final_data, user=current_user.name, page=page, flag=flag, count=count)
+
     elif 'keyword' in request.args:
         single = 1
         search = request.values.get('keyword')
         keyword = search
-        
-        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s" 
+
+        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s"
         book_row = DB.fetchall(sql, ('%' + search + '%',))
-        
+
         book_data = []
         total = 0
-        
+
         for i in book_row:
             book = {
                 '商品編號': i[0],
@@ -134,14 +134,14 @@ def bookstore():
 
             book_data.append(book)
             total = total + 1
-            
+
         if(len(book_data) < 9):
             flag = 1
-        
-        count = math.ceil(total/9) 
-        
-        return render_template('bookstore.html', keyword=search, single=single, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count) 
-    
+
+        count = math.ceil(total/9)
+
+        return render_template('bookstore.html', keyword=search, single=single, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)
+
     else:
         book_row = Product.get_all_product()
         book_data = []
@@ -154,12 +154,12 @@ def bookstore():
             }
             if len(book_data) < 9:
                 book_data.append(book)
-        
+
         return render_template('bookstore.html', book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)
 
 
 @store.route('/cart', methods=['GET', 'POST'])
-@login_required 
+@login_required
 def cart():
     # 當有人 POST (例如嘗試加入購物車) 到這個頁面時，
     # 我們把他導向主頁，因為這個頁面現在只顯示戰績。
@@ -172,7 +172,7 @@ def cart():
     if (current_user.role == 'manager'):
         flash('No permission')
         return redirect(url_for('manager.home'))
-    
+
     # 顯示戰績頁面 (cart.html)
     return render_template('cart.html', user=current_user.name)
 
@@ -340,40 +340,46 @@ def teamlist():
     return render_template('teamlist.html', teams=teams, keyword=keyword, user=current_user.name)
 
 
-# 單一球隊詳細資訊 
+# 單一球隊詳細資訊
 @store.route('/team_detail')
 @login_required
 def team_detail():
-    # 從 URL 參數取得球隊名稱
     team_name = request.args.get("team_name")
     if not team_name:
         flash('未指定球隊名稱')
         return redirect(url_for('bookstore.teamlist'))
 
-    # 權限檢查
     if current_user.role == 'manager':
         flash('No permission')
         return redirect(url_for('manager.home'))
 
-    # 取得球隊資料
     team = Team.get_team_detail(team_name)
     if not team:
         flash('查無此球隊')
         return redirect(url_for('bookstore.teamlist'))
 
-    # 整理成字典，方便 template 使用
     team_info = {
         'tName': team[0],
         'chiefCoach': team[1],
-        'companyName': team[2],
-        'cPhone': team[3],
-        'cAddress': team[4],
-        'fName': team[5]
+        'coachBirthday': team[2],
+        'companyName': team[3],
+        'cPhone': team[4],
+        'cAddress': team[5],
+        'fName': team[6]
     }
-    print(f"DEBUG: team_info['chiefCoach'] is: {team_info['chiefCoach']}")
 
-    # 傳給 template
-    return render_template('team_detail.html', team=team_info, user=current_user.name)
+    # 🔍 查詢該隊的其他教練（排除總教練）
+    coaches = Coach.get_coaches_by_team(team_name)
+    # 過濾掉總教練
+    other_coaches = [c for c in coaches if c[1] != team_info['chiefCoach']]
+
+    return render_template(
+        'team_detail.html',
+        team=team_info,
+        other_coaches=other_coaches,
+        user=current_user.name
+    )
+
 
 #--------------------------------------------
 @store.route('/race', methods=['GET', 'POST'])
@@ -389,7 +395,7 @@ def race():
 
     race_data = TeamRecord.get_team_records()
     races = []
-    print(race_data) 
+    print(race_data)
 
     for r in race_data:
         races.append({

@@ -12,7 +12,7 @@
     border: 1px solid #ddd;
     padding: 8px;
   }
-  .team-info-table th { background-color: #f8f9fa; text-align: left; }
+  .team-info-table th { background-color: #f8f9fa; text-align: left; width: 20%; }
   .btn-group { margin-top: 1rem; }
 </style>
 {% endblock head %}
@@ -27,19 +27,40 @@
   <table class="team-info-table">
     <tr>
       <th>總教練</th>
-      <td>{{ team.chiefCoach }}</td>
+      <td>
+        {{ team.chiefCoach or "尚未指定" }}
+        {% if team.coachBirthday %}
+          <span class="text-muted small">(生日：{{ team.coachBirthday }})</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>其他教練</th>
+      <td>
+        {% if other_coaches and other_coaches|length > 0 %}
+          {% for coach in other_coaches %}
+            {{ coach[1] }}
+            {% if coach[2] %}
+              <span class="text-muted small">(生日：{{ coach[2] }})</span>
+            {% endif %}
+            {% if not loop.last %}<br>{% endif %}
+          {% endfor %}
+        {% else %}
+          <span class="text-muted">目前沒有其他教練</span>
+        {% endif %}
+      </td>
     </tr>
     <tr>
       <th>公司</th>
-      <td>{{ team.companyName }}</td>
+      <td>{{ team.companyName or "—" }}</td>
     </tr>
     <tr>
       <th>聯絡電話</th>
-      <td>{{ team.cPhone }}</td>
+      <td>{{ team.cPhone or "—" }}</td>
     </tr>
     <tr>
       <th>主場</th>
-      <td>{{ team.fName }}</td>
+      <td>{{ team.fName or "—" }}</td>
     </tr>
   </table>
 

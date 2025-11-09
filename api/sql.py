@@ -407,30 +407,25 @@ class Team:
 
         return DB.fetchall(sql, tuple(params))
 
-
-
     @staticmethod
     def get_team_detail(tName):
         """
-        取得單一球隊詳細資訊 (修正: 透過 LEFT JOIN 取得總教練姓名)
+        取得單一球隊詳細資訊 (含總教練姓名與生日)
         """
         sql = '''
-            SELECT 
-                T.tName, 
-                C.cName AS chiefCoach,  -- 確保這裡將教練姓名別名為 chiefCoach
-                T.companyName, 
-                T.cPhone, 
-                T.cAddress, 
-                T.fName
-            FROM 
-                team T
-            LEFT JOIN 
-                coach C ON T.chiefCoach = C.cNo -- 確保這裡有 LEFT JOIN
-            WHERE 
-                T.tName = %s
-        '''
+              SELECT T.tName, 
+                     C.cName    AS chiefCoach,    -- 教練姓名 
+                     C.birthday AS coachBirthday, -- ✅ 加入生日 
+                     T.companyName, 
+                     T.cPhone, 
+                     T.cAddress, 
+                     T.fName
+              FROM team T 
+                       LEFT JOIN 
+                   coach C ON T.chiefCoach = C.cNo
+              WHERE T.tName = %s 
+              '''
         return DB.fetchone(sql, (tName,))
-
 
     @staticmethod
     def add_team(data):
@@ -651,6 +646,16 @@ class Coach:
     def delete_coach(cNo):
         sql = "DELETE FROM coach WHERE cno = %s"
         DB.execute_input(sql, (cNo,))
+
+    @staticmethod
+    def get_coaches_by_team(tName):
+        sql = '''
+            SELECT cno, cname, birthday, tname
+            FROM coach
+            WHERE tname = %s
+            ORDER BY cname
+        '''
+        return DB.fetchall(sql, (tName,))
 
 
 # -------------------------------
