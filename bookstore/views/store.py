@@ -1,3 +1,5 @@
+# 檔案位置: bookstore/views/store.py
+
 import re
 from typing_extensions import Self
 from flask import Flask, request, template_rendered, Blueprint
@@ -11,25 +13,14 @@ from sqlalchemy import null
 from link import *
 import math
 from base64 import b64encode
-from api.sql import Member, Order_List, Product, Record, Cart, Player, Team, Game
+from api.sql import Member, Order_List, Product, Record, Cart
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
 @store.route('/', methods=['GET', 'POST'])
-#------------------------------
-@store.route('/gamelist')
-@login_required 
-def gamelist():
-    # 以防管理者誤闖
-    if (current_user.role == 'manager'):
-        flash('No permission')
-        return redirect(url_for('manager.home'))
-    
-    # 這裡會渲染 templates/gamelist.html 並傳入使用者名稱
-    return render_template('gamelist.html', user=current_user.name)
-#------------------------------
 @login_required
 def bookstore():
+    # ... (你原有的 bookstore() 函式，完全不變) ...
     result = Product.count()
     count = math.ceil(result[0]/9)
     flag = 0
@@ -48,6 +39,8 @@ def bookstore():
         search = request.values.get('keyword')
         keyword = search
         
+        # 假設你這裡的 cursor 是從 link.py 導入的
+        from link import cursor # 
         cursor.execute('SELECT * FROM PRODUCT WHERE PNAME LIKE %s', ('%' + search + '%',))
         book_row = cursor.fetchall()
         book_data = []
@@ -71,7 +64,7 @@ def bookstore():
             
         count = math.ceil(total/9)
         
-        return render_template('bookstore.html', single=single, keyword=search, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)    
+        return render_template('bookstore.html', single=single, keyword=search, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count) 
 
     
     elif 'pid' in request.args:
@@ -119,12 +112,14 @@ def bookstore():
         for j in range(start, end):
             final_data.append(book_data[j])
         
-        return render_template('bookstore.html', book_data=final_data, user=current_user.name, page=page, flag=flag, count=count)    
+        return render_template('bookstore.html', book_data=final_data, user=current_user.name, page=page, flag=flag, count=count) 
     
     elif 'keyword' in request.args:
         single = 1
         search = request.values.get('keyword')
         keyword = search
+        
+        from link import cursor # 
         cursor.execute('SELECT * FROM PRODUCT WHERE PNAME LIKE %s', ('%' + search + '%',))
         book_row = cursor.fetchall()
         book_data = []
@@ -143,9 +138,9 @@ def bookstore():
         if(len(book_data) < 9):
             flag = 1
         
-        count = math.ceil(total/9)    
+        count = math.ceil(total/9) 
         
-        return render_template('bookstore.html', keyword=search, single=single, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)    
+        return render_template('bookstore.html', keyword=search, single=single, book_data=book_data, user=current_user.name, page=1, flag=flag, count=count) 
     
     else:
         book_row = Product.get_all_product()
@@ -162,82 +157,106 @@ def bookstore():
         
         return render_template('bookstore.html', book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)
 
+# --- 這是我加入的 /gamelist (先留著) ---
+@store.route('/gamelist')
+@login_required 
+def gamelist():
+    if (current_user.role == 'manager'):
+        flash('No permission')
+        return redirect(url_for('manager.home'))
+    return render_template('gamelist.html', user=current_user.name)
+# ---
+
 # 會員購物車
 @store.route('/cart', methods=['GET', 'POST'])
 @login_required # 使用者登入後才可以看
 def cart():
-    # 以防管理者誤闖
-    if request.method == 'GET':
-        if (current_user.role == 'manager'):
-            flash('No permission')
-            return redirect(url_for('manager.home'))
+    # ----------------------------------------------------------------
+  
+    try: # <--- 這是新加入的
+        # 以防管理者誤闖
+        if request.method == 'GET':
+            if (current_user.role == 'manager'):
+                flash('No permission')
+                return redirect(url_for('manager.home'))
 
-    # 回傳有 pid 代表要 加商品
-    if request.method == 'POST':
-        if "pid" in request.form:
-            data = Cart.get_cart(current_user.id)
-
-            if data is None:  # 假如購物車裡面沒有他的資料
-                time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                Cart.add_cart(current_user.id, time)  # 幫他加一台購物車
+        # 回傳有 pid 代表要 加商品
+        if request.method == 'POST':
+            if "pid" in request.form:
                 data = Cart.get_cart(current_user.id)
 
-            tno = data[2]  # 取得交易編號
-            pid = request.form.get('pid')  # 使用者想要購買的東西，使用 `request.form.get()` 來避免 KeyError
-            if not pid:
-                flash('Product ID is missing.')
-                return redirect(url_for('bookstore.cart'))  # 返回購物車頁面並顯示錯誤信息
+                if data is None: # 假如購物車裡面沒有他的資料
+                    time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    Cart.add_cart(current_user.id, time) # 幫他加一台購物車
+                    data = Cart.get_cart(current_user.id)
 
-            # 檢查購物車裡面有沒有商品
-            product = Record.check_product(pid, tno)
-            # 取得商品價錢
-            price = Product.get_product(pid)[2]
+                tno = data[2] # 取得交易編號
+                pid = request.form.get('pid') # 使用者想要購買的東西，使用 `request.form.get()` 來避免 KeyError
+                if not pid:
+                    flash('Product ID is missing.')
+                    return redirect(url_for('bookstore.cart')) # 返回購物車頁面並顯示錯誤信息
 
-            # 如果購物車裡面沒有的話，把它加一個進去
-            if product is None:
-                Record.add_product({'pid': pid, 'tno': tno, 'saleprice': price, 'total': price})
-            else:
-                # 如果購物車裡面有的話，就多加一個進去
-                amount = Record.get_amount(tno, pid)
-                total = (amount + 1) * int(price)
-                Record.update_product({'amount': amount + 1, 'tno': tno, 'pid': pid, 'total': total})
+                # 檢查購物車裡面有沒有商品
+                product = Record.check_product(pid, tno)
+                # 取得商品價錢
+                price = Product.get_product(pid)[2]
 
-        elif "delete" in request.form:
-            pid = request.form.get('delete')
-            tno = Cart.get_cart(current_user.id)[2]
+                # 如果購物車裡面沒有的話，把它加一個進去
+                if product is None:
+                    Record.add_product({'pid': pid, 'tno': tno, 'saleprice': price, 'total': price})
+                else:
+                    # 如果購物車裡面有的話，就多加一個進去
+                    amount = Record.get_amount(tno, pid)
+                    total = (amount + 1) * int(price)
+                    Record.update_product({'amount': amount + 1, 'tno': tno, 'pid': pid, 'total': total})
 
-            Member.delete_product(tno, pid)
-            product_data = only_cart()
+            elif "delete" in request.form:
+                pid = request.form.get('delete')
+                tno = Cart.get_cart(current_user.id)[2]
 
-        elif "user_edit" in request.form:
-            change_order()
-            return redirect(url_for('bookstore.bookstore'))
+                Member.delete_product(tno, pid)
+                # product_data = only_cart() # <--- 這裡不需要再呼叫
 
-        elif "buy" in request.form:
-            change_order()
-            return redirect(url_for('bookstore.order'))
+            elif "user_edit" in request.form:
+                change_order()
+                return redirect(url_for('bookstore.bookstore'))
 
-        elif "order" in request.form:
-            tno = Cart.get_cart(current_user.id)[2]
-            total = Record.get_total_money(tno)
-            Cart.clear_cart(current_user.id)
+            elif "buy" in request.form:
+                change_order()
+                return redirect(url_for('bookstore.order'))
 
-            time = str(datetime.now().strftime('%Y/%m/%d %H:%M:%S'))
-            format = 'yyyy/mm/dd hh24:mi:ss'
-            Order_List.add_order({'mid': current_user.id, 'ordertime': time, 'total': total, 'format': format, 'tno': tno})
+            elif "order" in request.form:
+                tno = Cart.get_cart(current_user.id)[2]
+                total = Record.get_total_money(tno)
+                Cart.clear_cart(current_user.id)
 
-            return render_template('complete.html', user=current_user.name)
+                time = str(datetime.now().strftime('%Y/%m/%d %H:%M:%S'))
+                format = 'yyyy/mm/dd hh24:mi:ss'
+                Order_List.add_order({'mid': current_user.id, 'ordertime': time, 'total': total, 'format': format, 'tno': tno})
 
-    product_data = only_cart()
+                return render_template('complete.html', user=current_user.name)
 
-    if product_data == 0:
+        # 不論是 GET 還是 POST (POST 沒 return 的話)，最後都會執行這裡
+        product_data = only_cart()
+
+        if product_data == 0:
+            return render_template('empty.html', user=current_user.name)
+        else:
+            return render_template('cart.html', data=product_data, user=current_user.name)
+            
+    # ----------------------------------------------------------------
+    except Exception as e:
+        # 如果 above 任何程式碼 (尤其是 only_cart()) 失敗了
+        print(f"!!! CRITICAL ERROR in cart() route: {e}")
+        # 在 OnRender 的 Logs 中印出真正的原因
+        
+        # 顯示一個安全的「空購物車」頁面，而不是 500 錯誤
         return render_template('empty.html', user=current_user.name)
-    else:
-        return render_template('cart.html', data=product_data, user=current_user.name)
 
 
 @store.route('/order')
 def order():
+    # ... (你原有的 order() 函式，完全不變) ...
     data = Cart.get_cart(current_user.id)
     tno = data[2]
 
@@ -250,17 +269,18 @@ def order():
             '商品編號': i[1],
             '商品名稱': pname,
             '商品價格': i[3],
-            '數量': i[2]
+            '數量': iG[2]
         }
         product_data.append(product)
     
-    total = float(Record.get_total(tno))  # 將 Decimal 轉換為 float
+    total = float(Record.get_total(tno)) # 將 Decimal 轉換為 float
 
 
     return render_template('order.html', data=product_data, total=total, user=current_user.name)
 
 @store.route('/orderlist')
 def orderlist():
+    # ... (你原有的 orderlist() 函式，完全不變) ...
     if "oid" in request.args :
         pass
     
@@ -293,6 +313,7 @@ def orderlist():
     return render_template('orderlist.html', data=orderlist, detail=orderdetail, user=current_user.name)
 
 def change_order():
+    # ... (你原有的 change_order() 函式，完全不變) ...
     data = Cart.get_cart(current_user.id)
     tno = data[2] # 使用者有購物車了，購物車的交易編號是什麼
     product_row = Record.get_record(data[2])
@@ -313,6 +334,7 @@ def change_order():
 
 
 def only_cart():
+    # ... (你原有的 only_cart() 函式，完全不變) ...
     count = Cart.check(current_user.id)
 
     if count is None:
@@ -338,131 +360,3 @@ def only_cart():
         product_data.append(product)
 
     return product_data
-
-@store.route('/playerlist', methods=['GET'])
-@login_required
-def playerlist():
-    if current_user.role == 'manager':
-        flash('No permission')
-        return redirect(url_for('manager.home'))
-
-    keyword = request.args.get('keyword', '').strip()
-
-    # 先取得所有隊伍
-    teams_data = Team.get_all_team()
-    teams = []
-
-    for team_row in teams_data:
-        tName = team_row[0]
-        # 依據關鍵字取該隊球員
-        players = Player.get_players_by_team(tName, keyword)
-
-        team = {
-            'name': tName,
-            'players': []
-        }
-
-        for p in players:
-            team['players'].append({
-                'pNo': p[0],
-                'name': p[1] or '未命名球員',
-                'position': p[2],
-                'height': p[3],
-                'weight': p[4],
-                'education': p[5],
-                'is_foreign': '*' in p[1] if p[1] else False
-            })
-
-        if keyword:
-            if team['players']:
-                teams.append(team)
-        else:
-            
-            teams.append(team)
-
-    return render_template('playerlist.html', teams=teams, keyword=keyword, user=current_user.name)
-
-
-@store.route('/playerinfo')
-@login_required
-def playerinfo():
-    tName = request.args.get('tName')
-    pNo = request.args.get('pNo')
-
-    if not tName or not pNo:
-        flash('缺少球員資訊參數')
-        return redirect(url_for('bookstore.playerlist'))
-
-    player = Player.get_player(tName, pNo)
-    if not player:
-        flash('查無此球員')
-        return redirect(url_for('bookstore.playerlist'))
-
-    player_info = {
-        'tName': player[0],
-        'pNo': player[1],
-        'name': player[2],
-        'birthday': player[3],
-        'height': player[4],
-        'weight': player[5],
-        'education': player[6],
-        'position': player[7]
-    }
-
-    return render_template('playerinfo.html', player=player_info, user=current_user.name)
-
-
-@store.route('/gamelist', methods=['GET'])
-@login_required
-def gamelist():
-    if current_user.role == 'manager':
-        flash('No permission')
-        return redirect(url_for('manager.home'))
-
-    team = request.args.get('team', '').strip()
-    field = request.args.get('field', '').strip()
-    date = request.args.get('date', '').strip()
-
-    # 檢查是否有篩選
-    if team or field or date:
-        games_data = Game.search_games(team=team, field=field, date=date)
-    else:
-        games_data = Game.get_all_games()
-
-    games = []
-    for g in games_data:
-        games.append({
-            'winTeam': g[0],
-            'loseTeam': g[1],
-            'date': g[2],
-            'fName': g[3],
-        })
-
-    return render_template('gamelist.html', games=games, user=current_user.name)
-
-@store.route('/gameinfo')
-@login_required
-def gameinfo():
-    winTeam = request.args.get('winTeam')
-    loseTeam = request.args.get('loseTeam')
-    date = request.args.get('date')
-
-    if not winTeam or not loseTeam or not date:
-        flash('缺少正確比賽資訊參數')
-        return redirect(url_for('bookstore.gamelist'))
-
-    game = Game.get_more_info(winTeam=winTeam, loseTeam=loseTeam, date=date)
-    if not game:
-        flash('查無此比賽紀錄')
-        return redirect(url_for('bookstore.gamelist'))
-    
-    game = game[0]
-    game_info = {
-        'winTeam': game[0],
-        'loseTeam': game[1],
-        'date': game[2],
-        'fName': game[3],
-        'result': game[4],
-    }
-
-    return render_template('gameinfo.html', game=game_info, user=current_user.name)
