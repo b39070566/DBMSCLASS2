@@ -321,6 +321,7 @@ def teamlist():
 
     # 取得所有球隊
     teams_data = Team.get_all_teams()  # 呼叫 sql.py 的 Team.get_all_teams()
+    print(teams_data)
     teams = []
 
     for t in teams_data:
@@ -339,19 +340,28 @@ def teamlist():
     return render_template('teamlist.html', teams=teams, keyword=keyword, user=current_user.name)
 
 
-# 單一球隊詳細資訊
-@store.route('/teamdetail/<team_name>')
+# 單一球隊詳細資訊 
+@store.route('/team_detail')
 @login_required
-def teamdetail(team_name):
+def team_detail():
+    # 從 URL 參數取得球隊名稱
+    team_name = request.args.get("team_name")
+    if not team_name:
+        flash('未指定球隊名稱')
+        return redirect(url_for('bookstore.teamlist'))
+
+    # 權限檢查
     if current_user.role == 'manager':
         flash('No permission')
         return redirect(url_for('manager.home'))
 
+    # 取得球隊資料
     team = Team.get_team_detail(team_name)
     if not team:
         flash('查無此球隊')
         return redirect(url_for('bookstore.teamlist'))
 
+    # 整理成字典，方便 template 使用
     team_info = {
         'tName': team[0],
         'chiefCoach': team[1],
@@ -360,8 +370,10 @@ def teamdetail(team_name):
         'cAddress': team[4],
         'fName': team[5]
     }
+    print(f"DEBUG: team_info['chiefCoach'] is: {team_info['chiefCoach']}")
 
-    return render_template('teamdetail.html', team=team_info, user=current_user.name)
+    # 傳給 template
+    return render_template('team_detail.html', team=team_info, user=current_user.name)
 
 #--------------------------------------------
 @store.route('/race', methods=['GET', 'POST'])
