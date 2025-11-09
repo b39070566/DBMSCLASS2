@@ -5,31 +5,67 @@ from psycopg2 import pool
 from dotenv import load_dotenv
 #--------------------------------
 get_team_records_sql = """
-WITH win_stats AS (
-  SELECT winteam AS team_name, COUNT(*) AS wins
-  FROM game
-  GROUP BY winteam
+/* CTE 1: 取得所有球隊的完整列表 */
+WITH all_teams AS (
+    /* * *** 關鍵假設 ***
+     * 我假設你的 'team' 資料表有一個 'team_name' 欄位。
+     * 如果你的欄位名稱不同 (例如 tname 或 name)，請在這裡修改它。
+     */
+    SELECT team_name FROM team
 ),
+
+/* CTE 2: 計算所有球隊的勝場數 */
+win_stats AS (
+    SELECT
+        winteam AS team_name,
+        COUNT(*) AS wins
+    FROM game
+    WHERE winteam IS NOT NULL /* 忽略和局 (NULL) */
+    GROUP BY winteam
+),
+
+/* CTE 3: 計算所有球隊的敗場數 */
 lose_stats AS (
-  SELECT loseteam AS team_name, COUNT(*) AS losses
-  FROM game
-  GROUP BY loseteam
+    SELECT
+        loseteam AS team_name,
+        COUNT(*) AS losses
+    FROM game
+    WHERE loseteam IS NOT NULL /* 忽略和局 (NULL) */
+    GROUP BY loseteam
 ),
+
+/* CTE 4: 合併所有資料 (以 all_teams 為基礎) */
 merged AS (
-  SELECT 
-    COALESCE(w.team_name, l.team_name) AS team_name,
-    COALESCE(w.wins, 0) AS wins,
-    COALESCE(l.losses, 0) AS losses
-  FROM win_stats w
-  FULL OUTER JOIN lose_stats l
-    ON w.team_name = l.team_name
+    SELECT
+        t.team_name,
+        COALESCE(w.wins, 0) AS wins,
+        COALESCE(l.losses, 0) AS losses,
+        /* 計算勝率 (W / (W+L)) */
+        ROUND(
+            /* COALESCE 避免 0 / 0 的錯誤 */
+            COALESCE(
+                w.wins::NUMERIC / NULLIF((COALESCE(w.wins, 0) + COALESCE(l.losses, 0)), 0),
+            0),
+        3) AS win_rate
+    FROM
+        all_teams t
+    /* LEFT JOIN 確保 0 勝 0 敗的球隊也能顯示 */
+    LEFT JOIN
+        win_stats w ON t.team_name = w.team_name
+    LEFT JOIN
+        lose_stats l ON t.team_name = l.team_name
 )
+
+/* 最終 Select: 計算勝差 (GB) */
 SELECT 
-  team_name,
-  wins,
-  losses,
-  ROUND(wins::NUMERIC / NULLIF((wins + losses), 0), 3) AS win_rate,
-  ROUND(((MAX(wins) OVER() - wins) + (losses - MIN(losses) OVER())) / 2.0, 1) AS games_behind
+    team_name,
+    wins,
+    losses,
+    win_rate,
+    /* 勝差公式: [ (第一名的勝 - 自己的勝) + (自己的敗 - 第一名的敗) ] / 2.0 */
+    ROUND(
+        ( (MAX(wins) OVER() - wins) + (losses - MIN(losses) OVER()) ) / 2.0,
+    1) AS games_behind
 FROM merged
 ORDER BY win_rate DESC, wins DESC;
 """
