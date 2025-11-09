@@ -308,3 +308,57 @@ def gameinfo():
 
     return render_template('gameinfo.html', game=game_info, user=current_user.name)
     return product_data
+
+# 球隊列表
+@store.route('/teamlist', methods=['GET'])
+@login_required
+def teamlist():
+    if current_user.role == 'manager':
+        flash('No permission')
+        return redirect(url_for('manager.home'))
+
+    keyword = request.args.get('keyword', '').strip()
+
+    # 取得所有球隊
+    teams_data = Team.get_all_teams()  # 呼叫 sql.py 的 Team.get_all_teams()
+    teams = []
+
+    for t in teams_data:
+        tName, chiefCoach, companyName, cPhone, cAddress, fName = t
+        if keyword and keyword.lower() not in tName.lower():
+            continue  # 篩選關鍵字
+        teams.append({
+            'tName': tName,
+            'chiefCoach': chiefCoach,
+            'companyName': companyName,
+            'cPhone': cPhone,
+            'cAddress': cAddress,
+            'fName': fName
+        })
+
+    return render_template('teamlist.html', teams=teams, keyword=keyword, user=current_user.name)
+
+
+# 單一球隊詳細資訊
+@store.route('/teamdetail/<team_name>')
+@login_required
+def teamdetail(team_name):
+    if current_user.role == 'manager':
+        flash('No permission')
+        return redirect(url_for('manager.home'))
+
+    team = Team.get_team_detail(team_name)
+    if not team:
+        flash('查無此球隊')
+        return redirect(url_for('bookstore.teamlist'))
+
+    team_info = {
+        'tName': team[0],
+        'chiefCoach': team[1],
+        'companyName': team[2],
+        'cPhone': team[3],
+        'cAddress': team[4],
+        'fName': team[5]
+    }
+
+    return render_template('teamdetail.html', team=team_info, user=current_user.name)
