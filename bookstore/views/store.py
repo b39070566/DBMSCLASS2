@@ -189,7 +189,7 @@ def playerlist():
     keyword = request.args.get('keyword', '').strip()
 
     # 先取得所有隊伍
-    teams_data = Team.get_all_team()
+    teams_data = Team.get_all_teams()
     teams = []
 
     for team_row in teams_data:

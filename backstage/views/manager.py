@@ -51,7 +51,7 @@ def teamManager():
     if 'edit' in request.form:
         return redirect(url_for('manager.editTeam', tName=request.form['edit']))
 
-    rows = Team.get_all_team()
+    rows = Team.get_all_teams()
     data = [
         {
             'tName': r[0],
@@ -86,8 +86,9 @@ def editTeam():
 
     if request.method == 'POST':
         Team.update_team({
-            'tName': tName,
-            'chiefCoach': request.form.get('chiefCoach'),  # 這裡會收到 cNo
+            'oldTName': tName,  # 原本的名稱
+            'tName': request.form.get('tName'),  # 新名稱（可改）
+            'chiefCoach': request.form.get('chiefCoach'),
             'companyName': request.form.get('companyName'),
             'cPhone': request.form.get('cPhone'),
             'cAddress': request.form.get('cAddress'),
@@ -172,7 +173,7 @@ def playerManager():
     ]
 
     # 給新增表單的隊伍清單（下拉選單用）
-    teams = [{'tName': t[0]} for t in Team.get_all_team()]
+    teams = [{'tName': t[0]} for t in Team.get_all_teams()]
     return render_template('playerManager.html', player_data=data, team_list=teams, user=current_user.name)
 
 
@@ -215,7 +216,7 @@ def editPlayer():
         data = {}
 
     # 下拉選單顯示全部隊伍
-    teams = [{'tName': t[0]} for t in Team.get_all_team()]
+    teams = [{'tName': t[0]} for t in Team.get_all_teams()]
     return render_template('editPlayer.html', data=data, team_list=teams, user=current_user.name)
 
 
@@ -232,7 +233,7 @@ def coachManager():
         return redirect(url_for('index'))
 
     # ✅ 取得隊伍清單供下拉選單使用
-    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+    team_list = [{'tName': r[0]} for r in Team.get_all_teams()]
 
     # 新增教練
     if request.method == 'POST' and 'add' in request.form:
@@ -267,7 +268,7 @@ def editCoach():
     cNo = request.args.get('cNo')
 
     # ✅ 下拉選單的隊伍清單
-    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+    team_list = [{'tName': r[0]} for r in Team.get_all_teams()]
 
     if request.method == 'POST':
         Coach.update_coach({
@@ -295,7 +296,7 @@ def gameManager():
         return redirect(url_for('index'))
 
     # ✅ 抓所有隊伍名稱與球場名稱
-    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+    team_list = [{'tName': r[0]} for r in Team.get_all_teams()]
     field_list = [{'fName': r[1]} for r in Field.get_all_fields()]  # 加這行
 
     # ✅ 抓所有日期（已登錄比賽日期）
@@ -351,7 +352,7 @@ def editGame():
     oldDate = request.args.get('date')
 
     # ✅ 下拉式選單資料
-    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+    team_list = [{'tName': r[0]} for r in Team.get_all_teams()]
     field_list = [{'fName': r[1]} for r in Field.get_all_fields()]  # 新增這行
     date_rows = Game.get_all_games()
     date_list = sorted(list({str(r[2]) for r in date_rows}))

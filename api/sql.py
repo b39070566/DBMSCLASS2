@@ -349,7 +349,7 @@ class Analysis:
 #----------------------------------------------
 class Team:
     @staticmethod
-    def get_all_team():
+    def get_all_teams():
         """
         取得所有球隊 (修正: 透過 LEFT JOIN 取得總教練姓名)
         """
@@ -450,22 +450,26 @@ class Team:
     @staticmethod
     def update_team(data):
         sql = '''
-            UPDATE team
-            SET chiefcoach = %s,
-                companyname = %s,
-                cphone = %s,
-                caddress = %s,
-                fname = %s
-            WHERE tname = %s
-        '''
+              UPDATE team
+              SET tname       = %s,
+                  chiefcoach  = %s,
+                  companyname = %s,
+                  cphone      = %s,
+                  caddress    = %s,
+                  fname       = %s
+              WHERE tname = %s \
+              '''
         DB.execute_input(sql, (
+            data.get('tName'),
             data.get('chiefCoach', None),
             data.get('companyName', None),
             data.get('cPhone', None),
             data.get('cAddress', None),
             data.get('fName', None),
-            data['tName']
+            data.get('oldTName')
         ))
+
+
 # -------------------------------
 # Team 球隊管理
 # -------------------------------
