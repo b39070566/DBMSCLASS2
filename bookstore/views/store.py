@@ -1,4 +1,3 @@
-# 檔案位置: bookstore/views/store.py
 
 import re
 from typing_extensions import Self
