@@ -1,0 +1,22 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">編輯球場資料</h3>
+  <form method="POST">
+    <div class="mb-2">
+      <label class="form-label">球場編號</label>
+      <input type="text" class="form-control" name="fId" value="{{ data.fId }}" readonly>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">球場名稱</label>
+      <input type="text" class="form-control" name="fName" value="{{ data.fName }}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">地址</label>
+      <input type="text" class="form-control" name="address" value="{{ data.address }}">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">儲存修改</button>
+    <a href="{{ url_for('manager.fieldManager') }}" class="btn btn-secondary mt-3">返回</a>
+  </form>
+</div>
+{% endblock %}

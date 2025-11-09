@@ -297,7 +297,7 @@ def gameinfo():
         flash('查無此比賽紀錄')
         return redirect(url_for('bookstore.gamelist'))
 
-    game = game[0]
+    # ⚠️ 不要再加 game = game[0]
     game_info = {
         'winTeam': game[0],
         'loseTeam': game[1],
@@ -307,7 +307,7 @@ def gameinfo():
     }
 
     return render_template('gameinfo.html', game=game_info, user=current_user.name)
-    return product_data
+
 
 # 球隊列表
 @store.route('/teamlist', methods=['GET'])

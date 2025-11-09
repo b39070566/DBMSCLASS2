@@ -683,4 +683,48 @@ class Game:
         sql = "DELETE FROM game WHERE winteam = %s AND loseteam = %s AND date = %s"
         DB.execute_input(sql, (winTeam, loseTeam, date))
 
+class Field:
+    @staticmethod
+    def get_all_fields():
+        sql = '''
+            SELECT fid, fname, address
+            FROM field
+            ORDER BY fid
+        '''
+        return DB.fetchall(sql)
+
+    @staticmethod
+    def get_field_detail(fId):
+        sql = '''
+            SELECT fid, fname, address
+            FROM field
+            WHERE fid = %s
+        '''
+        return DB.fetchone(sql, (fId,))
+
+    @staticmethod
+    def add_field(data):
+        sql = '''
+            INSERT INTO field (fid, fname, address)
+            VALUES (%s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            data['fId'], data['fName'], data['address']
+        ))
+
+    @staticmethod
+    def update_field(data):
+        sql = '''
+            UPDATE field
+            SET fname = %s, address = %s
+            WHERE fid = %s
+        '''
+        DB.execute_input(sql, (
+            data['fName'], data['address'], data['fId']
+        ))
+
+    @staticmethod
+    def delete_field(fId):
+        sql = "DELETE FROM field WHERE fid = %s"
+        DB.execute_input(sql, (fId,))
 

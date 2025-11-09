@@ -1,0 +1,36 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">球場管理</h3>
+  <form method="POST">
+    <input type="hidden" name="add" value="1">
+    <div class="row mb-2">
+      <div class="col"><input class="form-control" name="fId" placeholder="球場編號"></div>
+      <div class="col"><input class="form-control" name="fName" placeholder="球場名稱"></div>
+      <div class="col"><input class="form-control" name="address" placeholder="地址"></div>
+      <div class="col"><button class="btn btn-success w-100" type="submit">新增</button></div>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead><tr><th>編號</th><th>名稱</th><th>地址</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for field in field_data %}
+      <tr>
+        <td>{{ field.fId }}</td>
+        <td>{{ field.fName }}</td>
+        <td>{{ field.address }}</td>
+        <td>
+          <form method="POST" style="display:inline;">
+            <button class="btn btn-sm btn-danger" name="delete" value="{{ field.fId }}">刪除</button>
+          </form>
+          <form method="POST" style="display:inline;">
+            <button class="btn btn-sm btn-primary" name="edit" value="{{ field.fId }}">編輯</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

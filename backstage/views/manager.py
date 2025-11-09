@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, url_for, redirect, flash
 from flask_login import login_required, current_user
-from api.sql import Team, Player, Coach, Game
+from api.sql import Team, Player, Coach, Game, Field
 
 manager = Blueprint('manager', __name__, template_folder='../templates')
 
@@ -22,6 +22,10 @@ def teamManager():
     if current_user.role != 'manager':
         flash('No permission')
         return redirect(url_for('index'))
+
+    # 取得所有球場名稱（給下拉選單用）
+    fields = Field.get_all_fields()
+    field_list = [r[1] for r in fields]  # 只取 fName
 
     if request.method == 'POST' and 'add' in request.form:
         Team.add_team({
@@ -54,13 +58,23 @@ def teamManager():
             'fName': r[5]
         } for r in rows
     ]
-    return render_template('teamManager.html', team_data=data, user=current_user.name)
+    return render_template(
+        'teamManager.html',
+        team_data=data,
+        field_list=field_list,
+        user=current_user.name
+    )
 
 
 @manager.route('/editTeam', methods=['GET', 'POST'])
 @login_required
 def editTeam():
     tName = request.args.get('tName')
+
+    # 取得球場清單
+    fields = Field.get_all_fields()
+    field_list = [r[1] for r in fields]
+
     if request.method == 'POST':
         Team.update_team({
             'tName': tName,
@@ -79,7 +93,8 @@ def editTeam():
                 'cPhone': r[3], 'cAddress': r[4], 'fName': r[5]}
     else:
         data = {}
-    return render_template('editTeam.html', data=data, user=current_user.name)
+    return render_template('editTeam.html', data=data, field_list=field_list, user=current_user.name)
+
 
 
 # ========== 球員管理 ==========
@@ -255,8 +270,9 @@ def gameManager():
         flash('No permission')
         return redirect(url_for('index'))
 
-    # ✅ 抓所有隊伍名稱，用於下拉選單
+    # ✅ 抓所有隊伍名稱與球場名稱
     team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+    field_list = [{'fName': r[1]} for r in Field.get_all_fields()]  # 加這行
 
     # ✅ 抓所有日期（已登錄比賽日期）
     date_rows = Game.get_all_games()
@@ -291,15 +307,13 @@ def gameManager():
                                     date=parts[2]))
 
     rows = Game.get_all_games()
-    data = [
-        {'winTeam': r[0], 'loseTeam': r[1], 'date': r[2], 'fName': r[3]}
-        for r in rows
-    ]
+    data = [{'winTeam': r[0], 'loseTeam': r[1], 'date': r[2], 'fName': r[3]} for r in rows]
 
     return render_template(
         'gameManager.html',
         game_data=data,
         team_list=team_list,
+        field_list=field_list,  # 傳進 template
         date_list=date_list,
         user=current_user.name
     )
@@ -314,6 +328,7 @@ def editGame():
 
     # ✅ 下拉式選單資料
     team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+    field_list = [{'fName': r[1]} for r in Field.get_all_fields()]  # 新增這行
     date_rows = Game.get_all_games()
     date_list = sorted(list({str(r[2]) for r in date_rows}))
 
@@ -348,7 +363,64 @@ def editGame():
         'editGame.html',
         data=game_info,
         team_list=team_list,
+        field_list=field_list,  # 傳給模板
         date_list=date_list,
         user=current_user.name
     )
+
+
+# ========== 球場管理 ==========
+@manager.route('/fieldManager', methods=['GET', 'POST'])
+@login_required
+def fieldManager():
+    if current_user.role != 'manager':
+        flash('No permission')
+        return redirect(url_for('index'))
+
+    # ✅ 新增球場
+    if request.method == 'POST' and 'add' in request.form:
+        Field.add_field({
+            'fId': request.form.get('fId'),
+            'fName': request.form.get('fName'),
+            'address': request.form.get('address')
+        })
+        flash('球場新增成功')
+        return redirect(url_for('manager.fieldManager'))
+
+    # ✅ 刪除球場
+    if 'delete' in request.form:
+        Field.delete_field(request.form['delete'])
+        flash('刪除成功')
+        return redirect(url_for('manager.fieldManager'))
+
+    # ✅ 進入編輯頁
+    if 'edit' in request.form:
+        return redirect(url_for('manager.editField', fId=request.form['edit']))
+
+    # ✅ 顯示所有球場
+    rows = Field.get_all_fields()
+    data = [{'fId': r[0], 'fName': r[1], 'address': r[2]} for r in rows]
+    return render_template('fieldManager.html', field_data=data, user=current_user.name)
+
+
+@manager.route('/editField', methods=['GET', 'POST'])
+@login_required
+def editField():
+    fId = request.args.get('fId')
+
+    if request.method == 'POST':
+        Field.update_field({
+            'fId': fId,
+            'fName': request.form.get('fName'),
+            'address': request.form.get('address')
+        })
+        flash('球場修改成功')
+        return redirect(url_for('manager.fieldManager'))
+
+    r = Field.get_field_detail(fId)
+    data = {'fId': r[0], 'fName': r[1], 'address': r[2]} if r else {}
+    return render_template('editField.html', data=data, user=current_user.name)
+
+
+
 

@@ -3,51 +3,38 @@
 <div class="container mt-4">
   <h3 class="mb-3">編輯賽局資料</h3>
   <form method="POST">
-
-    <!-- 勝隊下拉 -->
     <div class="mb-2">
       <label class="form-label">勝隊</label>
-      <select class="form-select" name="winTeam" required>
-        <option value="{{ data.winTeam }}" selected>{{ data.winTeam }}</option>
+      <select class="form-select" name="winTeam">
         {% for team in team_list %}
-          {% if team.tName != data.winTeam %}
-            <option value="{{ team.tName }}">{{ team.tName }}</option>
-          {% endif %}
+        <option value="{{ team.tName }}" {% if team.tName == data.winTeam %}selected{% endif %}>{{ team.tName }}</option>
         {% endfor %}
       </select>
     </div>
-
-    <!-- 敗隊下拉 -->
     <div class="mb-2">
       <label class="form-label">敗隊</label>
-      <select class="form-select" name="loseTeam" required>
-        <option value="{{ data.loseTeam }}" selected>{{ data.loseTeam }}</option>
+      <select class="form-select" name="loseTeam">
         {% for team in team_list %}
-          {% if team.tName != data.loseTeam %}
-            <option value="{{ team.tName }}">{{ team.tName }}</option>
-          {% endif %}
+        <option value="{{ team.tName }}" {% if team.tName == data.loseTeam %}selected{% endif %}>{{ team.tName }}</option>
         {% endfor %}
       </select>
     </div>
-
-    <!-- 日期 -->
     <div class="mb-2">
-      <label class="form-label">比賽日期</label>
-      <input type="date" class="form-control" name="date" value="{{ data.date }}" required>
+      <label class="form-label">日期</label>
+      <input type="date" class="form-control" name="date" value="{{ data.date }}">
     </div>
-
-    <!-- 球場 -->
     <div class="mb-2">
-      <label class="form-label">球場</label>
-      <input type="text" class="form-control" name="fName" value="{{ data.fName }}" required>
+      <label class="form-label">比賽場地</label>
+      <select class="form-select" name="fName">
+        {% for field in field_list %}
+        <option value="{{ field.fName }}" {% if field.fName == data.fName %}selected{% endif %}>{{ field.fName }}</option>
+        {% endfor %}
+      </select>
     </div>
-
-    <!-- 結果 -->
     <div class="mb-2">
-      <label class="form-label">比數結果</label>
+      <label class="form-label">比賽結果</label>
       <input type="text" class="form-control" name="result" value="{{ data.result }}">
     </div>
-
     <button type="submit" class="btn btn-primary mt-3">儲存修改</button>
     <a href="{{ url_for('manager.gameManager') }}" class="btn btn-secondary mt-3">返回</a>
   </form>
