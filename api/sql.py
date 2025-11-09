@@ -7,17 +7,17 @@ from dotenv import load_dotenv
 get_team_records_sql = """
 /* CTE 1: 取得所有球隊的完整列表 */
 WITH all_teams AS (
-    /* * *** 關鍵假設 ***
-     * 我假設你的 'team' 資料表有一個 'team_name' 欄位。
-     * 如果你的欄位名稱不同 (例如 tname 或 name)，請在這裡修改它。
+    /* * *** 修正 ***
+     * 這裡從 'team' 資料表讀取 'tname' 欄位,
+     * 並把它重新命名 (AS) 為 'team_name' 供後續查詢使用。
      */
-    SELECT team_name FROM team
+    SELECT tname AS team_name FROM team
 ),
 
 /* CTE 2: 計算所有球隊的勝場數 */
 win_stats AS (
     SELECT
-        winteam AS team_name,
+        winteam AS team_name, /* 這裡的 team_name 只是別名 */
         COUNT(*) AS wins
     FROM game
     WHERE winteam IS NOT NULL /* 忽略和局 (NULL) */
@@ -27,7 +27,7 @@ win_stats AS (
 /* CTE 3: 計算所有球隊的敗場數 */
 lose_stats AS (
     SELECT
-        loseteam AS team_name,
+        loseteam AS team_name, /* 這裡的 team_name 只是別名 */
         COUNT(*) AS losses
     FROM game
     WHERE loseteam IS NOT NULL /* 忽略和局 (NULL) */
@@ -37,7 +37,7 @@ lose_stats AS (
 /* CTE 4: 合併所有資料 (以 all_teams 為基礎) */
 merged AS (
     SELECT
-        t.team_name,
+        t.team_name, /* 來自 all_teams (也就是 tname) */
         COALESCE(w.wins, 0) AS wins,
         COALESCE(l.losses, 0) AS losses,
         /* 計算勝率 (W / (W+L)) */
