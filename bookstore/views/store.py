@@ -14,7 +14,7 @@ from link import *
 import math
 from base64 import b64encode
 # 導入 DB class
-from api.sql import Member, Order_List, Product, Record, Cart, Player, Team, Game
+from api.sql import Member, Order_List, Product, Record, Cart, Player, Team, Game,TeamRecord
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
@@ -362,3 +362,31 @@ def teamdetail(team_name):
     }
 
     return render_template('teamdetail.html', team=team_info, user=current_user.name)
+
+#--------------------------------------------
+@store.route('/race', methods=['GET', 'POST'])
+@login_required
+def race():
+    if request.method == 'POST':
+        flash('Action completed, returning to store.')
+        return redirect(url_for('bookstore.bookstore'))
+
+    if current_user.role == 'manager':
+        flash('No permission')
+        return redirect(url_for('manager.home'))
+
+    race_data = TeamRecord.get_team_records()
+    races = []
+    print(race_data) 
+
+    for r in race_data:
+        races.append({
+            'team_name': r[0],
+            'wins': r[1] ,
+            'losses': r[2],
+            'win_rate': float(r[3]) if r[3] is not None else 0.0,
+            'games_behind': float(r[4]) if r[4] is not None else 0.0
+        })
+
+    return render_template('race.html', teams=races,user=current_user.name)
+

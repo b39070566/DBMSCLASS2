@@ -1,0 +1,58 @@
+{% extends "frontstage.html" %}
+
+{% block head %}
+{{ super() }}
+<style>
+    #standings-table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 20px auto;
+        font-size: 1em;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    #standings-table thead tr {
+        background-color: #f7f8f8;
+        color: #000000;
+    }
+    #standings-table th, #standings-table td {
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+    #standings-table tbody tr:nth-of-type(even) {
+        background-color: #f3f3f3;
+    }
+</style>
+{% endblock %}
+
+{% block title %}球隊戰績{% endblock %}
+
+{% block content %}
+<div class="container-xl" style="padding-top: 40px;">
+    <h2>球隊戰績</h2>
+    <table id="standings-table">
+        <thead>
+            <tr>
+                <th>排名</th>
+                <th>球隊名稱</th>
+                <th>勝</th>
+                <th>敗</th>
+                <th>勝率</th>
+                <th>勝差</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ team.team_name }}</td>
+                <td>{{ team.wins }}</td>
+                <td>{{ team.losses }}</td>
+                <td>{{ "%.3f"|format(team.win_rate) }}</td>
+                <td>{{ team.games_behind }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
