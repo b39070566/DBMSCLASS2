@@ -5,7 +5,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from link import *
 from api.sql import *
 #--------------------------------------
-from sql import get_team_records_sql
+from api.sql import get_team_records_sql
 #--------------------------------------
 
 api = Blueprint('api', __name__, template_folder='./templates')
