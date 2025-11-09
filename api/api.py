@@ -1,5 +1,6 @@
 import imp
-from flask import render_template, Blueprint, redirect, request, url_for, flash
+# --- ↓ 只需要在這裡加上 , jsonify ↓ ---
+from flask import render_template, Blueprint, redirect, request, url_for, flash, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from link import *
 from api.sql import *
