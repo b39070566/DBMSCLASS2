@@ -44,12 +44,17 @@ def teamManager():
         return redirect(url_for('manager.editTeam', tName=request.form['edit']))
 
     rows = Team.get_all_teams()
-    teams = [
-        {'tName': r[0], 'chiefCoach': r[1], 'companyName': r[2],
-         'cPhone': r[3], 'cAddress': r[4], 'fName': r[5]}
-        for r in rows
+    data = [
+        {
+            'tName': r[0],
+            'chiefCoach': r[1],
+            'companyName': r[2],
+            'cPhone': r[3],
+            'cAddress': r[4],
+            'fName': r[5]
+        } for r in rows
     ]
-    return render_template('teamManager.html', team_data=teams, user=current_user.name)
+    return render_template('teamManager.html', team_data=data, user=current_user.name)
 
 
 @manager.route('/editTeam', methods=['GET', 'POST'])
@@ -85,12 +90,13 @@ def playerManager():
         flash('No permission')
         return redirect(url_for('index'))
 
+    # ✅ 新增球員
     if request.method == 'POST' and 'add' in request.form:
         Player.add_player({
             'tName': request.form.get('tName'),
             'pNo': request.form.get('pNo'),
             'name': request.form.get('name'),
-            'birthday': request.form.get('birthday'),
+            'birthday': request.form.get('birthday') or None,
             'position': request.form.get('position'),
             'height': request.form.get('height'),
             'weight': request.form.get('weight'),
@@ -99,37 +105,52 @@ def playerManager():
         flash('球員新增成功')
         return redirect(url_for('manager.playerManager'))
 
+    # ✅ 刪除球員
     if 'delete' in request.form:
         Player.delete_player(request.form['delete'])
         flash('刪除成功')
         return redirect(url_for('manager.playerManager'))
 
+    # ✅ 編輯按鈕 → 轉址帶參數
     if 'edit' in request.form:
         return redirect(url_for('manager.editPlayer',
                                 tName=request.form['tName'],
                                 pNo=request.form['edit']))
 
+    # ✅ 顯示所有球員
     rows = Player.get_all_players()
     data = [
-        {'tName': r[0], 'pNo': r[1], 'name': r[2],
-         'position': r[3], 'height': r[4], 'weight': r[5], 'education': r[6]}
-        for r in rows
+        {
+            'tName': r[0],
+            'pNo': r[1],
+            'name': r[2],
+            'birthday': r[3],
+            'position': r[4],
+            'height': r[5],
+            'weight': r[6],
+            'education': r[7]
+        } for r in rows
     ]
-    return render_template('playerManager.html', player_data=data, user=current_user.name)
+
+    # ✅ 給新增表單的隊伍清單（下拉選單用）
+    teams = [{'tName': t[0]} for t in Team.get_all_team()]
+    return render_template('playerManager.html', player_data=data, team_list=teams, user=current_user.name)
 
 
+# ========== 編輯球員 ==========
 @manager.route('/editPlayer', methods=['GET', 'POST'])
 @login_required
 def editPlayer():
     tName = request.args.get('tName')
     pNo = request.args.get('pNo')
 
+    # ✅ 更新資料
     if request.method == 'POST':
         Player.update_player({
-            'tName': tName,
+            'tName': request.form.get('tName'),
             'pNo': pNo,
             'name': request.form.get('name'),
-            'birthday': request.form.get('birthday'),
+            'birthday': request.form.get('birthday') or None,
             'position': request.form.get('position'),
             'height': request.form.get('height'),
             'weight': request.form.get('weight'),
@@ -138,13 +159,29 @@ def editPlayer():
         flash('球員修改成功')
         return redirect(url_for('manager.playerManager'))
 
-    r = Player.get_player(tName, pNo)
-    if r:
-        data = {'tName': r[0], 'pNo': r[1], 'name': r[2], 'birthday': r[3],
-                'position': r[4], 'height': r[5], 'weight': r[6], 'education': r[7]}
+    # ✅ 撈單筆資料（for edit 頁面）
+    row = Player.get_player(tName, pNo)
+    if row:
+        data = {
+            'tName': row[0],
+            'pNo': row[1],
+            'name': row[2],
+            'birthday': row[3],
+            'height': row[4],
+            'weight': row[5],
+            'education': row[6],
+            'position': row[7]
+        }
     else:
         data = {}
-    return render_template('editPlayer.html', data=data, user=current_user.name)
+
+    # ✅ 下拉選單顯示全部隊伍
+    teams = [{'tName': t[0]} for t in Team.get_all_team()]
+    return render_template('editPlayer.html', data=data, team_list=teams, user=current_user.name)
+
+
+
+
 
 
 # ========== 教練管理 ==========

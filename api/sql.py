@@ -360,12 +360,19 @@ class Team:
         return DB.fetchall(sql)
 
     @staticmethod
+    @staticmethod
     def get_all_teams():
         sql = '''
-            SELECT tname, chiefcoach, companyname, cphone, caddress, fname
-            FROM team
-            ORDER BY tname
-        '''
+              SELECT t.tname,
+                     c.cname AS chiefcoach_name,
+                     t.companyname,
+                     t.cphone,
+                     t.caddress,
+                     t.fname
+              FROM team t
+                       LEFT JOIN coach c ON t.chiefcoach = c.cno
+              ORDER BY t.tname \
+              '''
         return DB.fetchall(sql)
 
     @staticmethod
@@ -432,20 +439,32 @@ class Player:
     def get_all_players(keyword=None):
         if keyword:
             sql = '''
-                SELECT t.tname, p.pno, p.name, p.position, p.height, p.weight, p.education
-                FROM team t
-                LEFT JOIN player p ON t.tname = p.tname
-                WHERE p.name ILIKE %s
-                ORDER BY t.tname
-            '''
+                  SELECT tname, \
+                         pno, \
+                         name, \
+                         birthday, \
+                         position, \
+                         height, \
+                         weight, \
+                         education
+                  FROM player
+                  WHERE name ILIKE %s
+                  ORDER BY tname \
+                  '''
             return DB.fetchall(sql, (f'%{keyword}%',))
         else:
             sql = '''
-                SELECT t.tname, p.pno, p.name, p.position, p.height, p.weight, p.education
-                FROM team t
-                LEFT JOIN player p ON t.tname = p.tname
-                ORDER BY t.tname
-            '''
+                  SELECT tname, \
+                         pno, \
+                         name, \
+                         birthday, \
+                         position, \
+                         height, \
+                         weight, \
+                         education
+                  FROM player
+                  ORDER BY tname \
+                  '''
             return DB.fetchall(sql)
 
     @staticmethod
@@ -488,15 +507,30 @@ class Player:
         ))
 
     @staticmethod
-    def update_player(data):
+    def update_player(input_data):
+        def safe_date(value):
+            return value if value not in (None, '', 'None') else None
+
         sql = '''
-            UPDATE player
-            SET name = %s, birthday = %s, position = %s, height = %s, weight = %s, education = %s
-            WHERE tname = %s AND pno = %s
-        '''
+              UPDATE player
+              SET name      = %s,
+                  birthday  = %s,
+                  position  = %s,
+                  height    = %s,
+                  weight    = %s,
+                  education = %s
+              WHERE tname = %s \
+                AND pno = %s \
+              '''
         DB.execute_input(sql, (
-            data['name'], data['birthday'], data['position'], data['height'],
-            data['weight'], data['education'], data['tName'], data['pNo']
+            input_data['name'],
+            safe_date(input_data['birthday']),  # ✅ 處理空生日
+            input_data['position'],
+            input_data['height'],
+            input_data['weight'],
+            input_data['education'],
+            input_data['tName'],
+            input_data['pNo']
         ))
 
     @staticmethod
