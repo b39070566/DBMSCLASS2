@@ -351,10 +351,53 @@ class Analysis:
 
 class Team:
     @staticmethod
-    def get_all_team():
-        sql = 'SELECT tname FROM team ORDER BY tname'
+    def get_all_teams():
+        """
+        取得所有球隊
+        """
+        sql = '''
+            SELECT tName, chiefCoach, companyName, cPhone, cAddress, fName
+            FROM team
+            ORDER BY tName
+        '''
         return DB.fetchall(sql)
 
+    @staticmethod
+    def search_teams(tName=None, chiefCoach=None, companyName=None):
+        """
+        搜尋球隊資料，可依球隊名稱、總教練、公司名稱過濾
+        未填的欄位會忽略
+        """
+        sql = "SELECT tName, chiefCoach, companyName, cPhone, cAddress, fName FROM team WHERE 1=1"
+        params = []
+
+        if tName:
+            sql += " AND tName LIKE %s"
+            params.append(f"%{tName}%")
+
+        if chiefCoach:
+            sql += " AND chiefCoach LIKE %s"
+            params.append(f"%{chiefCoach}%")
+
+        if companyName:
+            sql += " AND companyName LIKE %s"
+            params.append(f"%{companyName}%")
+
+        sql += " ORDER BY tName"
+
+        return DB.fetchall(sql, tuple(params))
+
+    @staticmethod
+    def get_team_detail(tName):
+        """
+        取得單一球隊詳細資訊
+        """
+        sql = '''
+            SELECT tName, chiefCoach, companyName, cPhone, cAddress, fName
+            FROM team
+            WHERE tName = %s
+        '''
+        return DB.fetchone(sql, (tName,))
 
 class Player:
     @staticmethod
