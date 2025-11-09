@@ -3,7 +3,6 @@
 {% block head %}
 {{ super() }}
 <style>
-  /* 球隊連結樣式 */
   a.team-link {
     color: #000 !important;
     text-decoration: none !important;
@@ -13,23 +12,14 @@
     color: #0a58ca !important;
     text-decoration: underline !important;
   }
-
-  /* 區塊排版微調 */
-  .team-section {
-    margin-bottom: 2rem;
-  }
-  .team-title {
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-  }
+  .team-section { margin-bottom: 2rem; }
+  .team-title { border-bottom: 2px solid #ddd; padding-bottom: 0.5rem; margin-bottom: 1rem; }
 </style>
 {% endblock head %}
 
 {% block title %}球隊列表{% endblock title %}
 
 {% block content %}
-
 <div class="container-xxl py-3">
   <h5 class="team-title fw-bold">球隊列表</h5>
   {% if teams %}
@@ -39,14 +29,8 @@
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title">{{ team.tName }}</h5>
-              <p class="card-text">
-                公司: {{ team.companyName }}<br>
-                聯絡電話: {{ team.cPhone }}<br>
-                主場: {{ team.fName }}
-              </p>
-              <a href="{{ url_for('team_detail', team_name=team.tName) }}" class="btn btn-outline-primary w-100 mb-2">球隊詳情</a>
-              <a href="{{ url_for('team_coaches', team_name=team.tName) }}" class="btn btn-outline-success w-100 mb-2">教練名單</a>
-              <a href="{{ url_for('team_players', team_name=team.tName) }}" class="btn btn-outline-warning w-100">球員點將錄</a>
+              <!-- 只顯示球隊名稱，點進去才有詳情 -->
+              <a href="{{ url_for('bookstore.team_detail', team_name=team.tName) }}" class="btn btn-outline-primary w-100">球隊詳情</a>
             </div>
           </div>
         </div>
@@ -56,5 +40,4 @@
     <p class="text-muted fst-italic">目前尚無球隊資料。</p>
   {% endif %}
 </div>
-
 {% endblock content %}
