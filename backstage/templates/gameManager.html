@@ -1,0 +1,91 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">賽局管理</h3>
+
+  <!-- 新增賽局表單 -->
+  <form method="POST">
+    <input type="hidden" name="add" value="1">
+    <div class="row mb-2">
+
+      <!-- 勝隊下拉 -->
+      <div class="col">
+        <select class="form-select" name="winTeam" required>
+          <option value="" disabled selected>選擇勝隊</option>
+          {% for team in team_list %}
+            <option value="{{ team.tName }}">{{ team.tName }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 敗隊下拉 -->
+      <div class="col">
+        <select class="form-select" name="loseTeam" required>
+          <option value="" disabled selected>選擇敗隊</option>
+          {% for team in team_list %}
+            <option value="{{ team.tName }}">{{ team.tName }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 日期 -->
+      <div class="col">
+        <input type="date" class="form-control" name="date" required>
+      </div>
+
+      <!-- 球場名稱 -->
+      <div class="col">
+        <input class="form-control" name="fName" placeholder="球場名稱" required>
+      </div>
+
+      <!-- 比數結果 -->
+      <div class="col">
+        <input class="form-control" name="result" placeholder="比數">
+      </div>
+
+      <div class="col">
+        <button class="btn btn-success w-100" type="submit">新增</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- 賽局資料表 -->
+  <table class="table table-bordered table-striped mt-4">
+    <thead>
+      <tr>
+        <th>勝隊</th>
+        <th>敗隊</th>
+        <th>日期</th>
+        <th>球場</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for game in game_data %}
+      <tr>
+        <td>{{ game.winTeam }}</td>
+        <td>{{ game.loseTeam }}</td>
+        <td>{{ game.date }}</td>
+        <td>{{ game.fName }}</td>
+        <td>
+          <form method="POST" style="display:inline;">
+            <button class="btn btn-sm btn-danger"
+                    name="delete"
+                    value="{{ game.winTeam }}|{{ game.loseTeam }}|{{ game.date }}">
+              刪除
+            </button>
+          </form>
+          <form method="POST" style="display:inline;">
+            <button class="btn btn-sm btn-primary"
+                    name="edit"
+                    value="{{ game.winTeam }}|{{ game.loseTeam }}|{{ game.date }}">
+              編輯
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

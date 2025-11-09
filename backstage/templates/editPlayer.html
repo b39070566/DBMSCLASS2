@@ -1,0 +1,58 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">編輯球員資料</h3>
+  <form method="POST">
+    <div class="mb-2">
+      <label class="form-label">所屬隊伍</label>
+      <select class="form-select" name="tName" required>
+        <option value="{{ data.tName }}" selected>{{ data.tName }}</option>
+        {% for team in team_list %}
+          {% if team.tName != data.tName %}
+            <option value="{{ team.tName }}">{{ team.tName }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">球員編號</label>
+      <input type="text" class="form-control" name="pNo" value="{{ data.pNo }}" readonly>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">姓名</label>
+      <input type="text" class="form-control" name="name" value="{{ data.name }}" required>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">生日</label>
+      <input type="date" class="form-control" name="birthday"
+             value="{{ data.birthday if data.birthday else '' }}">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">守備位置</label>
+      <input type="text" class="form-control" name="position" value="{{ data.position }}">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">身高 (cm)</label>
+      <input type="number" class="form-control" name="height" value="{{ data.height }}">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">體重 (kg)</label>
+      <input type="number" class="form-control" name="weight" value="{{ data.weight }}">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">學歷</label>
+      <input type="text" class="form-control" name="education" value="{{ data.education }}">
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">儲存修改</button>
+    <a href="{{ url_for('manager.playerManager') }}" class="btn btn-secondary mt-3">返回</a>
+  </form>
+</div>
+{% endblock %}

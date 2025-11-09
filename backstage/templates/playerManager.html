@@ -1,0 +1,68 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">球員管理</h3>
+
+  <form method="POST">
+    <input type="hidden" name="add" value="1">
+    <div class="row mb-2">
+      <div class="col">
+        <select class="form-select" name="tName" required>
+          <option value="">選擇隊伍</option>
+          {% for team in team_list %}
+            <option value="{{ team.tName }}">{{ team.tName }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col"><input class="form-control" name="pNo" placeholder="球員編號" required></div>
+      <div class="col"><input class="form-control" name="name" placeholder="姓名" required></div>
+      <div class="col"><input type="date" class="form-control" name="birthday" placeholder="生日"></div>
+      <div class="col"><input class="form-control" name="position" placeholder="守備位置"></div>
+      <div class="col"><input class="form-control" name="height" placeholder="身高"></div>
+      <div class="col"><input class="form-control" name="weight" placeholder="體重"></div>
+      <div class="col"><input class="form-control" name="education" placeholder="學歷"></div>
+      <div class="col"><button class="btn btn-success w-100" type="submit">新增</button></div>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>球隊</th>
+        <th>編號</th>
+        <th>姓名</th>
+        <th>生日</th>
+        <th>位置</th>
+        <th>身高</th>
+        <th>體重</th>
+        <th>學歷</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for player in player_data %}
+      <tr>
+        <td>{{ player.tName }}</td>
+        <td>{{ player.pNo }}</td>
+        <td>{{ player.name }}</td>
+        <td>{{ player.birthday }}</td>
+        <td>{{ player.position }}</td>
+        <td>{{ player.height }}</td>
+        <td>{{ player.weight }}</td>
+        <td>{{ player.education }}</td>
+        <td>
+          <form method="POST" style="display:inline;">
+            <input type="hidden" name="tName" value="{{ player.tName }}">
+            <button class="btn btn-sm btn-danger" name="delete" value="{{ player.pNo }}">刪除</button>
+          </form>
+          <form method="POST" style="display:inline;">
+            <input type="hidden" name="tName" value="{{ player.tName }}">
+            <button class="btn btn-sm btn-primary" name="edit" value="{{ player.pNo }}">編輯</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
