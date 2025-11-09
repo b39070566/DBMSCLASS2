@@ -1,5 +1,4 @@
 {% extends "frontstage.html" %}
-
 {% block head %}
 {{ super() }}
 {% endblock head %}
@@ -7,33 +6,6 @@
 {% block title %}購物車清單{% endblock title%}
 
 {% block content %}
-
-<style>
-    #standings-table {
-        border-collapse: collapse;
-        width: 100%; /* 讓表格跟 container 一樣寬 */
-        margin: 20px auto;
-        font-size: 1em;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    #standings-table thead tr {
-        background-color: #005A9C; /* 棒球藍 */
-        color: #ffffff;
-    }
-    #standings-table th,
-    #standings-table td {
-        padding: 12px 15px;
-        border: 1px solid #ddd;
-        text-align: left;
-    }
-    #standings-table td:first-child, /* 排名 */
-    #standings-table td:nth-child(n+3) { /* 勝敗勝率勝差 */
-        text-align: center;
-    }
-    #standings-table tbody tr:nth-of-type(even) {
-        background-color: #f3f3f3;
-    }
-</style>
 
 {% with messages = get_flashed_messages() %}
 {% if messages[0] == 'No permission' %}
@@ -65,6 +37,7 @@
         <td width="20%">
           <center>
             <input class="form-control" type="number" onkeyup="value=value.replace(/[^\d]/g,'')" min="1" value="{{ book.數量 }}" name="{{ book.商品編號 }}">
+
           </center>
         </td>
         <td>
@@ -84,8 +57,33 @@
       </div>
     </center>
   </form>
-
 </div>
+<style>
+    #standings-table {
+        border-collapse: collapse;
+        width: 100%; /* 讓表格跟 container 一樣寬 */
+        margin: 20px auto;
+        font-size: 1em;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    #standings-table thead tr {
+        background-color: #005A9C; /* 棒球藍 */
+        color: #ffffff;
+    }
+    #standings-table th,
+    #standings-table td {
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    #standings-table td:first-child, /* 排名 */
+    #standings-table td:nth-child(n+3) { /* 勝敗勝率勝差 */
+        text-align: center;
+    }
+    #standings-table tbody tr:nth-of-type(even) {
+        background-color: #f3f3f3;
+    }
+</style>
 
 <div class="container-xl" style="padding-top: 40px;">
     <h2>球隊戰績</h2>
