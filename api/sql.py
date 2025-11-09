@@ -4,7 +4,35 @@ import psycopg2
 from psycopg2 import pool
 from dotenv import load_dotenv
 #--------------------------------
-
+get_team_records_sql = """
+WITH win_stats AS (
+  SELECT winteam AS team_name, COUNT(*) AS wins
+  FROM game
+  GROUP BY winteam
+),
+lose_stats AS (
+  SELECT loseteam AS team_name, COUNT(*) AS losses
+  FROM game
+  GROUP BY loseteam
+),
+merged AS (
+  SELECT 
+    COALESCE(w.team_name, l.team_name) AS team_name,
+    COALESCE(w.wins, 0) AS wins,
+    COALESCE(l.losses, 0) AS losses
+  FROM win_stats w
+  FULL OUTER JOIN lose_stats l
+    ON w.team_name = l.team_name
+)
+SELECT 
+  team_name,
+  wins,
+  losses,
+  ROUND(wins::NUMERIC / NULLIF((wins + losses), 0), 3) AS win_rate,
+  ROUND(((MAX(wins) OVER() - wins) + (losses - MIN(losses) OVER())) / 2.0, 1) AS games_behind
+FROM merged
+ORDER BY win_rate DESC, wins DESC;
+"""
 #-----------------------------
 
 
