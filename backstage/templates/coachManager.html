@@ -2,19 +2,46 @@
 {% block content %}
 <div class="container mt-4">
   <h3 class="mb-3">教練管理</h3>
+
+  <!-- 新增教練 -->
   <form method="POST">
     <input type="hidden" name="add" value="1">
     <div class="row mb-2">
-      <div class="col"><input class="form-control" name="cNo" placeholder="教練編號"></div>
-      <div class="col"><input class="form-control" name="cName" placeholder="姓名"></div>
-      <div class="col"><input class="form-control" name="birthday" placeholder="生日"></div>
-      <div class="col"><input class="form-control" name="tName" placeholder="所屬隊伍"></div>
-      <div class="col"><button class="btn btn-success w-100" type="submit">新增</button></div>
+      <div class="col">
+        <input class="form-control" name="cNo" placeholder="教練編號" required>
+      </div>
+      <div class="col">
+        <input class="form-control" name="cName" placeholder="姓名" required>
+      </div>
+      <div class="col">
+        <input type="date" class="form-control" name="birthday" placeholder="生日">
+      </div>
+      <div class="col">
+        <!-- ✅ 改為下拉選單 -->
+        <select class="form-select" name="tName" required>
+          <option value="" disabled selected>選擇所屬隊伍</option>
+          {% for team in team_list %}
+            <option value="{{ team.tName }}">{{ team.tName }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col">
+        <button class="btn btn-success w-100" type="submit">新增</button>
+      </div>
     </div>
   </form>
 
+  <!-- 教練列表 -->
   <table class="table table-bordered table-striped">
-    <thead><tr><th>編號</th><th>姓名</th><th>生日</th><th>隊伍</th><th>操作</th></tr></thead>
+    <thead>
+      <tr>
+        <th>編號</th>
+        <th>姓名</th>
+        <th>生日</th>
+        <th>隊伍</th>
+        <th>操作</th>
+      </tr>
+    </thead>
     <tbody>
       {% for coach in coach_data %}
       <tr>

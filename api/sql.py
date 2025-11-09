@@ -625,11 +625,13 @@ class Game:
     @staticmethod
     def get_more_info(winTeam, loseTeam, date):
         sql = '''
-            SELECT winteam, loseteam, date, fname, result
-            FROM game
-            WHERE winteam = %s AND loseteam = %s AND date = %s
-        '''
-        return DB.fetchone(sql, (winTeam, loseTeam, date))
+              SELECT winteam, loseteam, date, fname, result
+              FROM game
+              WHERE winteam = %s \
+                AND loseteam = %s \
+                AND date = %s \
+              '''
+        return DB.fetchone(sql, (winTeam, loseTeam, date))  # ✅ fetchone
 
     @staticmethod
     def search_games(team=None, field=None, date=None):

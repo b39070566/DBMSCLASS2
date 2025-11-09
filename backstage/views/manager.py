@@ -90,7 +90,7 @@ def playerManager():
         flash('No permission')
         return redirect(url_for('index'))
 
-    # ✅ 新增球員
+
     if request.method == 'POST' and 'add' in request.form:
         Player.add_player({
             'tName': request.form.get('tName'),
@@ -105,19 +105,19 @@ def playerManager():
         flash('球員新增成功')
         return redirect(url_for('manager.playerManager'))
 
-    # ✅ 刪除球員
+
     if 'delete' in request.form:
         Player.delete_player(request.form['delete'])
         flash('刪除成功')
         return redirect(url_for('manager.playerManager'))
 
-    # ✅ 編輯按鈕 → 轉址帶參數
+
     if 'edit' in request.form:
         return redirect(url_for('manager.editPlayer',
                                 tName=request.form['tName'],
                                 pNo=request.form['edit']))
 
-    # ✅ 顯示所有球員
+    # 顯示所有球員
     rows = Player.get_all_players()
     data = [
         {
@@ -132,7 +132,7 @@ def playerManager():
         } for r in rows
     ]
 
-    # ✅ 給新增表單的隊伍清單（下拉選單用）
+    # 給新增表單的隊伍清單（下拉選單用）
     teams = [{'tName': t[0]} for t in Team.get_all_team()]
     return render_template('playerManager.html', player_data=data, team_list=teams, user=current_user.name)
 
@@ -144,7 +144,7 @@ def editPlayer():
     tName = request.args.get('tName')
     pNo = request.args.get('pNo')
 
-    # ✅ 更新資料
+    # 更新資料
     if request.method == 'POST':
         Player.update_player({
             'tName': request.form.get('tName'),
@@ -159,7 +159,7 @@ def editPlayer():
         flash('球員修改成功')
         return redirect(url_for('manager.playerManager'))
 
-    # ✅ 撈單筆資料（for edit 頁面）
+    # 撈單筆資料（for edit 頁面）
     row = Player.get_player(tName, pNo)
     if row:
         data = {
@@ -175,7 +175,7 @@ def editPlayer():
     else:
         data = {}
 
-    # ✅ 下拉選單顯示全部隊伍
+    # 下拉選單顯示全部隊伍
     teams = [{'tName': t[0]} for t in Team.get_all_team()]
     return render_template('editPlayer.html', data=data, team_list=teams, user=current_user.name)
 
@@ -192,6 +192,10 @@ def coachManager():
         flash('No permission')
         return redirect(url_for('index'))
 
+    # ✅ 取得隊伍清單供下拉選單使用
+    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+
+    # 新增教練
     if request.method == 'POST' and 'add' in request.form:
         Coach.add_coach({
             'cNo': request.form.get('cNo'),
@@ -202,23 +206,30 @@ def coachManager():
         flash('教練新增成功')
         return redirect(url_for('manager.coachManager'))
 
+    # 刪除教練
     if 'delete' in request.form:
         Coach.delete_coach(request.form['delete'])
         flash('刪除成功')
         return redirect(url_for('manager.coachManager'))
 
+    # 編輯教練
     if 'edit' in request.form:
         return redirect(url_for('manager.editCoach', cNo=request.form['edit']))
 
     rows = Coach.get_all_coaches()
     data = [{'cNo': r[0], 'cName': r[1], 'birthday': r[2], 'tName': r[3]} for r in rows]
-    return render_template('coachManager.html', coach_data=data, user=current_user.name)
+
+    return render_template('coachManager.html', coach_data=data, team_list=team_list, user=current_user.name)
 
 
 @manager.route('/editCoach', methods=['GET', 'POST'])
 @login_required
 def editCoach():
     cNo = request.args.get('cNo')
+
+    # ✅ 下拉選單的隊伍清單
+    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+
     if request.method == 'POST':
         Coach.update_coach({
             'cNo': cNo,
@@ -231,7 +242,9 @@ def editCoach():
 
     r = Coach.get_coach(cNo)
     data = {'cNo': r[0], 'cName': r[1], 'birthday': r[2], 'tName': r[3]} if r else {}
-    return render_template('editCoach.html', data=data, user=current_user.name)
+
+    return render_template('editCoach.html', data=data, team_list=team_list, user=current_user.name)
+
 
 
 # ========== 賽局管理 ==========
@@ -241,6 +254,13 @@ def gameManager():
     if current_user.role != 'manager':
         flash('No permission')
         return redirect(url_for('index'))
+
+    # ✅ 抓所有隊伍名稱，用於下拉選單
+    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+
+    # ✅ 抓所有日期（已登錄比賽日期）
+    date_rows = Game.get_all_games()
+    date_list = sorted(list({str(r[2]) for r in date_rows}))  # 去重+排序
 
     if request.method == 'POST' and 'add' in request.form:
         Game.add_game({
@@ -275,7 +295,14 @@ def gameManager():
         {'winTeam': r[0], 'loseTeam': r[1], 'date': r[2], 'fName': r[3]}
         for r in rows
     ]
-    return render_template('gameManager.html', game_data=data, user=current_user.name)
+
+    return render_template(
+        'gameManager.html',
+        game_data=data,
+        team_list=team_list,
+        date_list=date_list,
+        user=current_user.name
+    )
 
 
 @manager.route('/editGame', methods=['GET', 'POST'])
@@ -284,6 +311,11 @@ def editGame():
     oldWinTeam = request.args.get('winTeam')
     oldLoseTeam = request.args.get('loseTeam')
     oldDate = request.args.get('date')
+
+    # ✅ 下拉式選單資料
+    team_list = [{'tName': r[0]} for r in Team.get_all_team()]
+    date_rows = Game.get_all_games()
+    date_list = sorted(list({str(r[2]) for r in date_rows}))
 
     if request.method == 'POST':
         Game.update_game({
@@ -312,4 +344,11 @@ def editGame():
         flash('查無資料')
         return redirect(url_for('manager.gameManager'))
 
-    return render_template('editGame.html', data=game_info, user=current_user.name)
+    return render_template(
+        'editGame.html',
+        data=game_info,
+        team_list=team_list,
+        date_list=date_list,
+        user=current_user.name
+    )
+

@@ -3,22 +3,39 @@
 <div class="container mt-4">
   <h3 class="mb-3">編輯教練資料</h3>
   <form method="POST">
+    <!-- 教練編號 -->
     <div class="mb-2">
       <label class="form-label">教練編號</label>
       <input type="text" class="form-control" name="cNo" value="{{ data.cNo }}" readonly>
     </div>
+
+    <!-- 姓名 -->
     <div class="mb-2">
       <label class="form-label">姓名</label>
-      <input type="text" class="form-control" name="cName" value="{{ data.cName }}">
+      <input type="text" class="form-control" name="cName" value="{{ data.cName }}" required>
     </div>
+
+    <!-- 生日 -->
     <div class="mb-2">
       <label class="form-label">生日</label>
-      <input type="text" class="form-control" name="birthday" value="{{ data.birthday }}">
+      <input type="date" class="form-control" name="birthday"
+             value="{{ data.birthday if data.birthday else '' }}">
     </div>
+
+    <!-- 所屬隊伍 (下拉選單) -->
     <div class="mb-2">
       <label class="form-label">所屬隊伍</label>
-      <input type="text" class="form-control" name="tName" value="{{ data.tName }}">
+      <select class="form-select" name="tName" required>
+        <option value="{{ data.tName }}" selected>{{ data.tName }}</option>
+        {% for team in team_list %}
+          {% if team.tName != data.tName %}
+            <option value="{{ team.tName }}">{{ team.tName }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
     </div>
+
+    <!-- 操作按鈕 -->
     <button type="submit" class="btn btn-primary mt-3">儲存修改</button>
     <a href="{{ url_for('manager.coachManager') }}" class="btn btn-secondary mt-3">返回</a>
   </form>
