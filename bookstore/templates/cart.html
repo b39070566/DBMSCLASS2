@@ -2,6 +2,12 @@
 
 {% block head %}
 {{ super() }}
+{% endblock head %}
+
+{% block title %}購物車清單{% endblock title%}
+
+{% block content %}
+
 <style>
     #standings-table {
         border-collapse: collapse;
@@ -28,11 +34,6 @@
         background-color: #f3f3f3;
     }
 </style>
-{% endblock head %}
-
-{% block title %}購物車清單{% endblock title%}
-
-{% block content %}
 
 {% with messages = get_flashed_messages() %}
 {% if messages[0] == 'No permission' %}
