@@ -1,12 +1,52 @@
 {% extends "frontstage.html" %}
 
 {% block head %}
+{{ super() }}
+<style>
+  .team-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  .team-info-table th, .team-info-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  .team-info-table th { background-color: #f8f9fa; text-align: left; }
+  .btn-group { margin-top: 1rem; }
+</style>
+{% endblock head %}
 
-<h1>{{ team.tName }}</h1>
-<p>總教練: {{ team.chiefCoach }}</p>
-<p>公司名稱: {{ team.companyName }}</p>
-<p>聯絡電話: {{ team.cPhone }}</p>
-<p>地址: {{ team.cAddress }}</p>
+{% block title %}球隊詳情{% endblock title %}
 
-<a href="{{ url_for('team_coaches', team_name=team.tName) }}">教練名單</a>
-<a href="{{ url_for('team_players', team_name=team.tName) }}">球員點將錄</a>
+{% block content %}
+<div class="container-xxl py-3">
+  <h5 class="team-title fw-bold">{{ team.tName }} 詳情</h5>
+
+  <!-- 球隊基本資訊表格 -->
+  <table class="team-info-table">
+    <tr>
+      <th>總教練</th>
+      <td>{{ team.chiefCoach }}</td>
+    </tr>
+    <tr>
+      <th>公司</th>
+      <td>{{ team.companyName }}</td>
+    </tr>
+    <tr>
+      <th>聯絡電話</th>
+      <td>{{ team.cPhone }}</td>
+    </tr>
+    <tr>
+      <th>主場</th>
+      <td>{{ team.fName }}</td>
+    </tr>
+  </table>
+
+  <!-- 按鈕區 -->
+  <div class="btn-group d-flex gap-2">
+    <a href="{{ url_for('bookstore.teamlist') }}" class="btn btn-outline-secondary">返回列表</a>
+    <a href="{{ url_for('bookstore.playerlist', team_name=team.tName) }}" class="btn btn-primary">球員點將錄</a>
+  </div>
+</div>
+{% endblock content %}
