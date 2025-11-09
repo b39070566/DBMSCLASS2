@@ -349,7 +349,7 @@ class Analysis:
 #----------------------------------------------
 class Team:
     @staticmethod
-    def get_all_teams():
+    def get_all_team():
         """
         取得所有球隊 (修正: 透過 LEFT JOIN 取得總教練姓名)
         """
@@ -407,6 +407,8 @@ class Team:
 
         return DB.fetchall(sql, tuple(params))
 
+
+
     @staticmethod
     def get_team_detail(tName):
         """
@@ -430,6 +432,40 @@ class Team:
         return DB.fetchone(sql, (tName,))
 
 
+    @staticmethod
+    def add_team(data):
+        sql = '''
+            INSERT INTO team (tname, chiefcoach, companyname, cphone, caddress, fname)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            data['tName'],
+            data.get('chiefCoach', None),   # 可為空
+            data.get('companyName', None),
+            data.get('cPhone', None),
+            data.get('cAddress', None),
+            data.get('fName', None)
+        ))
+
+    @staticmethod
+    def update_team(data):
+        sql = '''
+            UPDATE team
+            SET chiefcoach = %s,
+                companyname = %s,
+                cphone = %s,
+                caddress = %s,
+                fname = %s
+            WHERE tname = %s
+        '''
+        DB.execute_input(sql, (
+            data.get('chiefCoach', None),
+            data.get('companyName', None),
+            data.get('cPhone', None),
+            data.get('cAddress', None),
+            data.get('fName', None),
+            data['tName']
+        ))
 # -------------------------------
 # Team 球隊管理
 # -------------------------------

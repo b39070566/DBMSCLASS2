@@ -28,15 +28,19 @@ def teamManager():
     field_list = [r[1] for r in fields]  # 只取 fName
 
     if request.method == 'POST' and 'add' in request.form:
+        # 若總教練未填，設為 None
+        chiefCoach = request.form.get('chiefCoach') or None
+
         Team.add_team({
             'tName': request.form.get('tName'),
-            'chiefCoach': request.form.get('chiefCoach'),
+            'chiefCoach': chiefCoach,
             'companyName': request.form.get('companyName'),
             'cPhone': request.form.get('cPhone'),
             'cAddress': request.form.get('cAddress'),
             'fName': request.form.get('fName')
         })
-        flash('新增成功')
+
+        flash('隊伍新增成功（總教練暫留空）')
         return redirect(url_for('manager.teamManager'))
 
     if 'delete' in request.form:
@@ -47,7 +51,7 @@ def teamManager():
     if 'edit' in request.form:
         return redirect(url_for('manager.editTeam', tName=request.form['edit']))
 
-    rows = Team.get_all_teams()
+    rows = Team.get_all_team()
     data = [
         {
             'tName': r[0],
@@ -66,6 +70,7 @@ def teamManager():
     )
 
 
+
 @manager.route('/editTeam', methods=['GET', 'POST'])
 @login_required
 def editTeam():
@@ -73,12 +78,16 @@ def editTeam():
 
     # 取得球場清單
     fields = Field.get_all_fields()
-    field_list = [r[1] for r in fields]
+    field_list = [r[1] for r in fields]  # 只取 fName
+
+    # 取得教練清單（提供 cNo + cName 給下拉式選單使用）
+    coaches = Coach.get_all_coaches()
+    coach_list = [{'cNo': r[0], 'cName': r[1]} for r in coaches]
 
     if request.method == 'POST':
         Team.update_team({
             'tName': tName,
-            'chiefCoach': request.form.get('chiefCoach'),
+            'chiefCoach': request.form.get('chiefCoach'),  # 這裡會收到 cNo
             'companyName': request.form.get('companyName'),
             'cPhone': request.form.get('cPhone'),
             'cAddress': request.form.get('cAddress'),
@@ -87,13 +96,28 @@ def editTeam():
         flash('修改成功')
         return redirect(url_for('manager.teamManager'))
 
+    # 取得原始隊伍資料
     r = Team.get_team_detail(tName)
     if r:
-        data = {'tName': r[0], 'chiefCoach': r[1], 'companyName': r[2],
-                'cPhone': r[3], 'cAddress': r[4], 'fName': r[5]}
+        data = {
+            'tName': r[0],
+            'chiefCoach': r[1],  # 這裡是 cName（顯示用）
+            'companyName': r[2],
+            'cPhone': r[3],
+            'cAddress': r[4],
+            'fName': r[5]
+        }
     else:
         data = {}
-    return render_template('editTeam.html', data=data, field_list=field_list, user=current_user.name)
+
+    return render_template(
+        'editTeam.html',
+        data=data,
+        field_list=field_list,
+        coach_list=coach_list,
+        user=current_user.name
+    )
+
 
 
 

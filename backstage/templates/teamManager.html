@@ -2,15 +2,24 @@
 {% block content %}
 <div class="container mt-4">
   <h3 class="mb-3">隊伍管理</h3>
-  <form method="POST">
+
+  <!-- 新增隊伍表單（無總教練欄位） -->
+  <form method="POST" class="mb-4">
     <input type="hidden" name="add" value="1">
-    <div class="row mb-2">
-      <div class="col"><input class="form-control" name="tName" placeholder="隊伍名稱"></div>
-      <div class="col"><input class="form-control" name="chiefCoach" placeholder="總教練"></div>
-      <div class="col"><input class="form-control" name="companyName" placeholder="公司名稱"></div>
-      <div class="col"><input class="form-control" name="cPhone" placeholder="聯絡電話"></div>
-      <div class="col"><input class="form-control" name="cAddress" placeholder="公司地址"></div>
-      <div class="col">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-2">
+        <input class="form-control" name="tName" placeholder="隊伍名稱" required>
+      </div>
+      <div class="col-md-2">
+        <input class="form-control" name="companyName" placeholder="公司名稱">
+      </div>
+      <div class="col-md-2">
+        <input class="form-control" name="cPhone" placeholder="聯絡電話">
+      </div>
+      <div class="col-md-3">
+        <input class="form-control" name="cAddress" placeholder="公司地址">
+      </div>
+      <div class="col-md-2">
         <select class="form-select" name="fName">
           <option value="">選擇主場</option>
           {% for field in field_list %}
@@ -18,22 +27,35 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col"><button class="btn btn-success w-100" type="submit">新增</button></div>
+      <div class="col-md-1">
+        <button class="btn btn-success w-100" type="submit">新增</button>
+      </div>
     </div>
   </form>
 
-  <table class="table table-bordered table-striped">
-    <thead><tr><th>隊名</th><th>總教練</th><th>公司名稱</th><th>電話</th><th>地址</th><th>主場</th><th>操作</th></tr></thead>
+  <!-- 隊伍資料表（保留總教練顯示） -->
+  <table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark text-center">
+      <tr>
+        <th>隊名</th>
+        <th>總教練</th>
+        <th>公司名稱</th>
+        <th>電話</th>
+        <th>地址</th>
+        <th>主場</th>
+        <th>操作</th>
+      </tr>
+    </thead>
     <tbody>
       {% for team in team_data %}
       <tr>
         <td>{{ team.tName }}</td>
-        <td>{{ team.chiefCoach }}</td>
-        <td>{{ team.companyName }}</td>
-        <td>{{ team.cPhone }}</td>
-        <td>{{ team.cAddress }}</td>
-        <td>{{ team.fName }}</td>
-        <td>
+        <td>{{ team.chiefCoach or '-' }}</td>
+        <td>{{ team.companyName or '-' }}</td>
+        <td>{{ team.cPhone or '-' }}</td>
+        <td>{{ team.cAddress or '-' }}</td>
+        <td>{{ team.fName or '-' }}</td>
+        <td class="text-center">
           <form method="POST" style="display:inline;">
             <button class="btn btn-sm btn-danger" name="delete" value="{{ team.tName }}">刪除</button>
           </form>

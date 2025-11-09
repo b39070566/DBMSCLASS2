@@ -2,37 +2,61 @@
 {% block content %}
 <div class="container mt-4">
   <h3 class="mb-3">編輯隊伍資料</h3>
+
   <form method="POST">
-    <div class="mb-2">
+    <!-- 隊伍名稱 -->
+    <div class="mb-3">
       <label class="form-label">隊伍名稱</label>
       <input type="text" class="form-control" name="tName" value="{{ data.tName }}" readonly>
     </div>
-    <div class="mb-2">
+
+    <!-- 總教練（顯示名字，但送出編號） -->
+    <div class="mb-3">
       <label class="form-label">總教練</label>
-      <input type="text" class="form-control" name="chiefCoach" value="{{ data.chiefCoach }}">
-    </div>
-    <div class="mb-2">
-      <label class="form-label">公司名稱</label>
-      <input type="text" class="form-control" name="companyName" value="{{ data.companyName }}">
-    </div>
-    <div class="mb-2">
-      <label class="form-label">公司電話</label>
-      <input type="text" class="form-control" name="cPhone" value="{{ data.cPhone }}">
-    </div>
-    <div class="mb-2">
-      <label class="form-label">公司地址</label>
-      <input type="text" class="form-control" name="cAddress" value="{{ data.cAddress }}">
-    </div>
-    <div class="mb-2">
-      <label class="form-label">主場</label>
-      <select class="form-select" name="fName">
-        {% for field in field_list %}
-        <option value="{{ field }}" {% if field == data.fName %}selected{% endif %}>{{ field }}</option>
+      <select class="form-select" name="chiefCoach">
+        <option value="">尚未指定</option>
+        {% for coach in coach_list %}
+          <option value="{{ coach.cNo }}" {% if coach.cName == data.chiefCoach %}selected{% endif %}>
+            {{ coach.cName }}
+          </option>
         {% endfor %}
       </select>
     </div>
-    <button type="submit" class="btn btn-primary mt-3">儲存修改</button>
-    <a href="{{ url_for('manager.teamManager') }}" class="btn btn-secondary mt-3">返回</a>
+
+    <!-- 公司名稱 -->
+    <div class="mb-3">
+      <label class="form-label">公司名稱</label>
+      <input type="text" class="form-control" name="companyName" value="{{ data.companyName or '' }}">
+    </div>
+
+    <!-- 公司電話 -->
+    <div class="mb-3">
+      <label class="form-label">公司電話</label>
+      <input type="text" class="form-control" name="cPhone" value="{{ data.cPhone or '' }}">
+    </div>
+
+    <!-- 公司地址 -->
+    <div class="mb-3">
+      <label class="form-label">公司地址</label>
+      <input type="text" class="form-control" name="cAddress" value="{{ data.cAddress or '' }}">
+    </div>
+
+    <!-- 主場 -->
+    <div class="mb-3">
+      <label class="form-label">主場</label>
+      <select class="form-select" name="fName">
+        <option value="">選擇主場</option>
+        {% for field in field_list %}
+          <option value="{{ field }}" {% if field == data.fName %}selected{% endif %}>{{ field }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- 按鈕 -->
+    <div class="mt-4">
+      <button type="submit" class="btn btn-primary">儲存修改</button>
+      <a href="{{ url_for('manager.teamManager') }}" class="btn btn-secondary ms-2">返回</a>
+    </div>
   </form>
 </div>
 {% endblock %}
