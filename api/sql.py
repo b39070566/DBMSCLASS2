@@ -683,4 +683,42 @@ class Game:
         sql = "DELETE FROM game WHERE winteam = %s AND loseteam = %s AND date = %s"
         DB.execute_input(sql, (winTeam, loseTeam, date))
 
+#--------------------------------------
+class TeamRecord:
+    """
+    球隊戰績功能：
+    顯示每隊的勝場、敗場、勝率與勝差
+    """
+    @staticmethod
+    def get_team_records():
+        sql = """
+        SELECT 
+            t.tname AS team_name,
+            COALESCE(w.wins, 0) AS wins,
+            COALESCE(l.losses, 0) AS losses,
+            ROUND(
+                COALESCE(
+                    w.wins::NUMERIC / NULLIF((COALESCE(w.wins, 0) + COALESCE(l.losses, 0)), 0),
+                0),
+            3) AS win_rate,
+            ROUND(
+                ((MAX(COALESCE(w.wins,0)) OVER() - COALESCE(w.wins,0)) 
+                 + (COALESCE(l.losses,0) - MIN(COALESCE(l.losses,0)) OVER())) / 2.0,
+            1) AS games_behind
+        FROM team t
+        LEFT JOIN (
+            SELECT winteam AS team_name, COUNT(*) AS wins
+            FROM game
+            WHERE winteam IS NOT NULL
+            GROUP BY winteam
+        ) w ON t.tname = w.team_name
+        LEFT JOIN (
+            SELECT loseteam AS team_name, COUNT(*) AS losses
+            FROM game
+            WHERE loseteam IS NOT NULL
+            GROUP BY loseteam
+        ) l ON t.tname = l.team_name
+        ORDER BY win_rate DESC, wins DESC;
+        """
+        return DB.fetchall(sql)
 
