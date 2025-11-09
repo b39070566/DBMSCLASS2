@@ -1,0 +1,26 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">編輯教練資料</h3>
+  <form method="POST">
+    <div class="mb-2">
+      <label class="form-label">教練編號</label>
+      <input type="text" class="form-control" name="cNo" value="{{ data.cNo }}" readonly>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">姓名</label>
+      <input type="text" class="form-control" name="cName" value="{{ data.cName }}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">生日</label>
+      <input type="text" class="form-control" name="birthday" value="{{ data.birthday }}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">所屬隊伍</label>
+      <input type="text" class="form-control" name="tName" value="{{ data.tName }}">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">儲存修改</button>
+    <a href="{{ url_for('manager.coachManager') }}" class="btn btn-secondary mt-3">返回</a>
+  </form>
+</div>
+{% endblock %}

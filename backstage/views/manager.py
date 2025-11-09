@@ -1,177 +1,278 @@
 from flask import Blueprint, render_template, request, url_for, redirect, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from link import *
-from api.sql import *
-import imp, random, os, string
-from werkzeug.utils import secure_filename
-from flask import current_app
-
-UPLOAD_FOLDER = 'static/product'
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+from flask_login import login_required, current_user
+from api.sql import Team, Player, Coach, Game
 
 manager = Blueprint('manager', __name__, template_folder='../templates')
 
-def config():
-    current_app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    config = current_app.config['UPLOAD_FOLDER'] 
-    return config
 
-@manager.route('/', methods=['GET', 'POST'])
+# ========== 首頁重導向 ==========
+@manager.route('/')
 @login_required
 def home():
-    return redirect(url_for('manager.productManager'))
+    if current_user.role != 'manager':
+        flash('No permission')
+        return redirect(url_for('index'))
+    return redirect(url_for('manager.teamManager'))
 
-@manager.route('/productManager', methods=['GET', 'POST'])
+
+# ========== 隊伍管理 ==========
+@manager.route('/teamManager', methods=['GET', 'POST'])
 @login_required
-def productManager():
-    if request.method == 'GET':
-        if(current_user.role == 'user'):
-            flash('No permission')
-            return redirect(url_for('index'))
-        
-    if 'delete' in request.values:
-        pid = request.values.get('delete')
-        data = Record.delete_check(pid)
-        
-        if(data != None):
-            flash('failed')
+def teamManager():
+    if current_user.role != 'manager':
+        flash('No permission')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST' and 'add' in request.form:
+        Team.add_team({
+            'tName': request.form.get('tName'),
+            'chiefCoach': request.form.get('chiefCoach'),
+            'companyName': request.form.get('companyName'),
+            'cPhone': request.form.get('cPhone'),
+            'cAddress': request.form.get('cAddress'),
+            'fName': request.form.get('fName')
+        })
+        flash('新增成功')
+        return redirect(url_for('manager.teamManager'))
+
+    if 'delete' in request.form:
+        Team.delete_team(request.form['delete'])
+        flash('刪除成功')
+        return redirect(url_for('manager.teamManager'))
+
+    if 'edit' in request.form:
+        return redirect(url_for('manager.editTeam', tName=request.form['edit']))
+
+    rows = Team.get_all_teams()
+    teams = [
+        {'tName': r[0], 'chiefCoach': r[1], 'companyName': r[2],
+         'cPhone': r[3], 'cAddress': r[4], 'fName': r[5]}
+        for r in rows
+    ]
+    return render_template('teamManager.html', team_data=teams, user=current_user.name)
+
+
+@manager.route('/editTeam', methods=['GET', 'POST'])
+@login_required
+def editTeam():
+    tName = request.args.get('tName')
+    if request.method == 'POST':
+        Team.update_team({
+            'tName': tName,
+            'chiefCoach': request.form.get('chiefCoach'),
+            'companyName': request.form.get('companyName'),
+            'cPhone': request.form.get('cPhone'),
+            'cAddress': request.form.get('cAddress'),
+            'fName': request.form.get('fName')
+        })
+        flash('修改成功')
+        return redirect(url_for('manager.teamManager'))
+
+    r = Team.get_team_detail(tName)
+    if r:
+        data = {'tName': r[0], 'chiefCoach': r[1], 'companyName': r[2],
+                'cPhone': r[3], 'cAddress': r[4], 'fName': r[5]}
+    else:
+        data = {}
+    return render_template('editTeam.html', data=data, user=current_user.name)
+
+
+# ========== 球員管理 ==========
+@manager.route('/playerManager', methods=['GET', 'POST'])
+@login_required
+def playerManager():
+    if current_user.role != 'manager':
+        flash('No permission')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST' and 'add' in request.form:
+        Player.add_player({
+            'tName': request.form.get('tName'),
+            'pNo': request.form.get('pNo'),
+            'name': request.form.get('name'),
+            'birthday': request.form.get('birthday'),
+            'position': request.form.get('position'),
+            'height': request.form.get('height'),
+            'weight': request.form.get('weight'),
+            'education': request.form.get('education')
+        })
+        flash('球員新增成功')
+        return redirect(url_for('manager.playerManager'))
+
+    if 'delete' in request.form:
+        Player.delete_player(request.form['delete'])
+        flash('刪除成功')
+        return redirect(url_for('manager.playerManager'))
+
+    if 'edit' in request.form:
+        return redirect(url_for('manager.editPlayer',
+                                tName=request.form['tName'],
+                                pNo=request.form['edit']))
+
+    rows = Player.get_all_players()
+    data = [
+        {'tName': r[0], 'pNo': r[1], 'name': r[2],
+         'position': r[3], 'height': r[4], 'weight': r[5], 'education': r[6]}
+        for r in rows
+    ]
+    return render_template('playerManager.html', player_data=data, user=current_user.name)
+
+
+@manager.route('/editPlayer', methods=['GET', 'POST'])
+@login_required
+def editPlayer():
+    tName = request.args.get('tName')
+    pNo = request.args.get('pNo')
+
+    if request.method == 'POST':
+        Player.update_player({
+            'tName': tName,
+            'pNo': pNo,
+            'name': request.form.get('name'),
+            'birthday': request.form.get('birthday'),
+            'position': request.form.get('position'),
+            'height': request.form.get('height'),
+            'weight': request.form.get('weight'),
+            'education': request.form.get('education')
+        })
+        flash('球員修改成功')
+        return redirect(url_for('manager.playerManager'))
+
+    r = Player.get_player(tName, pNo)
+    if r:
+        data = {'tName': r[0], 'pNo': r[1], 'name': r[2], 'birthday': r[3],
+                'position': r[4], 'height': r[5], 'weight': r[6], 'education': r[7]}
+    else:
+        data = {}
+    return render_template('editPlayer.html', data=data, user=current_user.name)
+
+
+# ========== 教練管理 ==========
+@manager.route('/coachManager', methods=['GET', 'POST'])
+@login_required
+def coachManager():
+    if current_user.role != 'manager':
+        flash('No permission')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST' and 'add' in request.form:
+        Coach.add_coach({
+            'cNo': request.form.get('cNo'),
+            'cName': request.form.get('cName'),
+            'birthday': request.form.get('birthday'),
+            'tName': request.form.get('tName')
+        })
+        flash('教練新增成功')
+        return redirect(url_for('manager.coachManager'))
+
+    if 'delete' in request.form:
+        Coach.delete_coach(request.form['delete'])
+        flash('刪除成功')
+        return redirect(url_for('manager.coachManager'))
+
+    if 'edit' in request.form:
+        return redirect(url_for('manager.editCoach', cNo=request.form['edit']))
+
+    rows = Coach.get_all_coaches()
+    data = [{'cNo': r[0], 'cName': r[1], 'birthday': r[2], 'tName': r[3]} for r in rows]
+    return render_template('coachManager.html', coach_data=data, user=current_user.name)
+
+
+@manager.route('/editCoach', methods=['GET', 'POST'])
+@login_required
+def editCoach():
+    cNo = request.args.get('cNo')
+    if request.method == 'POST':
+        Coach.update_coach({
+            'cNo': cNo,
+            'cName': request.form.get('cName'),
+            'birthday': request.form.get('birthday'),
+            'tName': request.form.get('tName')
+        })
+        flash('教練修改成功')
+        return redirect(url_for('manager.coachManager'))
+
+    r = Coach.get_coach(cNo)
+    data = {'cNo': r[0], 'cName': r[1], 'birthday': r[2], 'tName': r[3]} if r else {}
+    return render_template('editCoach.html', data=data, user=current_user.name)
+
+
+# ========== 賽局管理 ==========
+@manager.route('/gameManager', methods=['GET', 'POST'])
+@login_required
+def gameManager():
+    if current_user.role != 'manager':
+        flash('No permission')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST' and 'add' in request.form:
+        Game.add_game({
+            'winTeam': request.form.get('winTeam'),
+            'loseTeam': request.form.get('loseTeam'),
+            'date': request.form.get('date'),
+            'fName': request.form.get('fName'),
+            'result': request.form.get('result')
+        })
+        flash('賽局新增成功')
+        return redirect(url_for('manager.gameManager'))
+
+    if 'delete' in request.form:
+        parts = request.form['delete'].split('|')
+        if len(parts) == 3:
+            Game.delete_game(parts[0], parts[1], parts[2])
+            flash('刪除成功')
         else:
-            data = Product.get_product(pid)
-            Product.delete_product(pid)
-    
-    elif 'edit' in request.values:
-        pid = request.values.get('edit')
-        return redirect(url_for('manager.edit', pid=pid))
-    
-    book_data = book()
-    return render_template('productManager.html', book_data = book_data, user=current_user.name)
+            flash('刪除參數錯誤')
+        return redirect(url_for('manager.gameManager'))
 
-def book():
-    book_row = Product.get_all_product()
-    book_data = []
-    for i in book_row:
-        book = {
-            '商品編號': i[0],
-            '商品名稱': i[1],
-            '商品售價': i[2],
-            '商品類別': i[3]
+    if 'edit' in request.form:
+        parts = request.form['edit'].split('|')
+        if len(parts) == 3:
+            return redirect(url_for('manager.editGame',
+                                    winTeam=parts[0],
+                                    loseTeam=parts[1],
+                                    date=parts[2]))
+
+    rows = Game.get_all_games()
+    data = [
+        {'winTeam': r[0], 'loseTeam': r[1], 'date': r[2], 'fName': r[3]}
+        for r in rows
+    ]
+    return render_template('gameManager.html', game_data=data, user=current_user.name)
+
+
+@manager.route('/editGame', methods=['GET', 'POST'])
+@login_required
+def editGame():
+    oldWinTeam = request.args.get('winTeam')
+    oldLoseTeam = request.args.get('loseTeam')
+    oldDate = request.args.get('date')
+
+    if request.method == 'POST':
+        Game.update_game({
+            'winTeam': request.form.get('winTeam'),
+            'loseTeam': request.form.get('loseTeam'),
+            'date': request.form.get('date'),
+            'fName': request.form.get('fName'),
+            'result': request.form.get('result'),
+            'oldWinTeam': oldWinTeam,
+            'oldLoseTeam': oldLoseTeam,
+            'oldDate': oldDate
+        })
+        flash('賽局修改成功')
+        return redirect(url_for('manager.gameManager'))
+
+    data = Game.get_more_info(oldWinTeam, oldLoseTeam, oldDate)
+    if data:
+        game_info = {
+            'winTeam': data[0],
+            'loseTeam': data[1],
+            'date': data[2],
+            'fName': data[3],
+            'result': data[4]
         }
-        book_data.append(book)
-    return book_data
-
-@manager.route('/add', methods=['GET', 'POST'])
-def add():
-    if request.method == 'POST':
-        data = ""
-        while(data != None):
-            number = str(random.randrange( 10000, 99999))
-            en = random.choice(string.ascii_letters)
-            pid = en + number
-            data = Product.get_product(pid)
-
-        pname = request.values.get('pname')
-        price = request.values.get('price')
-        category = request.values.get('category')
-        pdesc = request.values.get('description')
-
-        # 檢查是否正確獲取到所有欄位的數據
-        if pname is None or price is None or category is None or pdesc is None:
-            flash('所有欄位都是必填的，請確認輸入內容。')
-            return redirect(url_for('manager.productManager'))
-
-        # 檢查欄位的長度
-        if len(pname) < 1 or len(price) < 1:
-            flash('商品名稱或價格不可為空。')
-            return redirect(url_for('manager.productManager'))
-
-
-        if (len(pname) < 1 or len(price) < 1):
-            return redirect(url_for('manager.productManager'))
-        
-        Product.add_product(
-            {'pid' : pid,
-             'pname' : pname,
-             'price' : price,
-             'category' : category,
-             'pdesc':pdesc
-            }
-        )
-
-        return redirect(url_for('manager.productManager'))
-
-    return render_template('productManager.html')
-
-@manager.route('/edit', methods=['GET', 'POST'])
-@login_required
-def edit():
-    if request.method == 'GET':
-        if(current_user.role == 'user'):
-            flash('No permission')
-            return redirect(url_for('bookstore'))
-
-    if request.method == 'POST':
-        Product.update_product(
-            {
-            'pname' : request.values.get('pname'),
-            'price' : request.values.get('price'),
-            'category' : request.values.get('category'), 
-            'pdesc' : request.values.get('description'),
-            'pid' : request.values.get('pid')
-            }
-        )
-        
-        return redirect(url_for('manager.productManager'))
-
     else:
-        product = show_info()
-        return render_template('edit.html', data=product)
+        flash('查無資料')
+        return redirect(url_for('manager.gameManager'))
 
-
-def show_info():
-    pid = request.args['pid']
-    data = Product.get_product(pid)
-    pname = data[1]
-    price = data[2]
-    category = data[3]
-    description = data[4]
-
-    product = {
-        '商品編號': pid,
-        '商品名稱': pname,
-        '單價': price,
-        '類別': category,
-        '商品敘述': description
-    }
-    return product
-
-
-@manager.route('/orderManager', methods=['GET', 'POST'])
-@login_required
-def orderManager():
-    if request.method == 'POST':
-        pass
-    else:
-        order_row = Order_List.get_order()
-        order_data = []
-        for i in order_row:
-            order = {
-                '訂單編號': i[0],
-                '訂購人': i[1],
-                '訂單總價': i[2],
-                '訂單時間': i[3]
-            }
-            order_data.append(order)
-            
-        orderdetail_row = Order_List.get_orderdetail()
-        order_detail = []
-
-        for j in orderdetail_row:
-            orderdetail = {
-                '訂單編號': j[0],
-                '商品名稱': j[1],
-                '商品單價': j[2],
-                '訂購數量': j[3]
-            }
-            order_detail.append(orderdetail)
-
-    return render_template('orderManager.html', orderData = order_data, orderDetail = order_detail, user=current_user.name)
+    return render_template('editGame.html', data=game_info, user=current_user.name)

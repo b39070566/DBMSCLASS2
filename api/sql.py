@@ -349,57 +349,105 @@ class Analysis:
 #----------------------------------------------
 
 
+
+# -------------------------------
+# Team 球隊管理
+# -------------------------------
 class Team:
     @staticmethod
+    def get_all_team():
+        sql = 'SELECT tname FROM team ORDER BY tname'
+        return DB.fetchall(sql)
+
+    @staticmethod
     def get_all_teams():
-        """
-        取得所有球隊
-        """
         sql = '''
-            SELECT tName, chiefCoach, companyName, cPhone, cAddress, fName
+            SELECT tname, chiefcoach, companyname, cphone, caddress, fname
             FROM team
-            ORDER BY tName
+            ORDER BY tname
         '''
         return DB.fetchall(sql)
 
     @staticmethod
-    def search_teams(tName=None, chiefCoach=None, companyName=None):
-        """
-        搜尋球隊資料，可依球隊名稱、總教練、公司名稱過濾
-        未填的欄位會忽略
-        """
-        sql = "SELECT tName, chiefCoach, companyName, cPhone, cAddress, fName FROM team WHERE 1=1"
-        params = []
-
-        if tName:
-            sql += " AND tName LIKE %s"
-            params.append(f"%{tName}%")
-
-        if chiefCoach:
-            sql += " AND chiefCoach LIKE %s"
-            params.append(f"%{chiefCoach}%")
-
-        if companyName:
-            sql += " AND companyName LIKE %s"
-            params.append(f"%{companyName}%")
-
-        sql += " ORDER BY tName"
-
-        return DB.fetchall(sql, tuple(params))
-
-    @staticmethod
     def get_team_detail(tName):
-        """
-        取得單一球隊詳細資訊
-        """
         sql = '''
-            SELECT tName, chiefCoach, companyName, cPhone, cAddress, fName
+            SELECT tname, chiefcoach, companyname, cphone, caddress, fname
             FROM team
-            WHERE tName = %s
+            WHERE tname = %s
         '''
         return DB.fetchone(sql, (tName,))
 
+    @staticmethod
+    def search_teams(tName=None, chiefCoach=None, companyName=None):
+        sql = "SELECT tname, chiefcoach, companyname, cphone, caddress, fname FROM team WHERE 1=1"
+        params = []
+
+        if tName:
+            sql += " AND tname ILIKE %s"
+            params.append(f"%{tName}%")
+        if chiefCoach:
+            sql += " AND chiefcoach ILIKE %s"
+            params.append(f"%{chiefCoach}%")
+        if companyName:
+            sql += " AND companyname ILIKE %s"
+            params.append(f"%{companyName}%")
+
+        sql += " ORDER BY tname"
+        return DB.fetchall(sql, tuple(params))
+
+    @staticmethod
+    def add_team(data):
+        sql = '''
+            INSERT INTO team (tname, chiefcoach, companyname, cphone, caddress, fname)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            data['tName'], data['chiefCoach'], data['companyName'],
+            data['cPhone'], data['cAddress'], data['fName']
+        ))
+
+    @staticmethod
+    def update_team(data):
+        sql = '''
+            UPDATE team
+            SET chiefcoach = %s, companyname = %s, cphone = %s, caddress = %s, fname = %s
+            WHERE tname = %s
+        '''
+        DB.execute_input(sql, (
+            data['chiefCoach'], data['companyName'], data['cPhone'],
+            data['cAddress'], data['fName'], data['tName']
+        ))
+
+    @staticmethod
+    def delete_team(tName):
+        sql = "DELETE FROM team WHERE tname = %s"
+        DB.execute_input(sql, (tName,))
+
+
+# -------------------------------
+# Player 球員管理
+# -------------------------------
 class Player:
+    @staticmethod
+    def get_all_players(keyword=None):
+        if keyword:
+            sql = '''
+                SELECT t.tname, p.pno, p.name, p.position, p.height, p.weight, p.education
+                FROM team t
+                LEFT JOIN player p ON t.tname = p.tname
+                WHERE p.name ILIKE %s
+                ORDER BY t.tname
+            '''
+            return DB.fetchall(sql, (f'%{keyword}%',))
+        else:
+            sql = '''
+                SELECT t.tname, p.pno, p.name, p.position, p.height, p.weight, p.education
+                FROM team t
+                LEFT JOIN player p ON t.tname = p.tname
+                ORDER BY t.tname
+            '''
+            return DB.fetchall(sql)
+
     @staticmethod
     def get_players_by_team(tName, keyword=None):
         if keyword:
@@ -428,60 +476,175 @@ class Player:
         '''
         return DB.fetchone(sql, (tName, pNo))
 
+    @staticmethod
+    def add_player(data):
+        sql = '''
+            INSERT INTO player (tname, pno, name, birthday, position, height, weight, education)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            data['tName'], data['pNo'], data['name'], data['birthday'],
+            data['position'], data['height'], data['weight'], data['education']
+        ))
+
+    @staticmethod
+    def update_player(data):
+        sql = '''
+            UPDATE player
+            SET name = %s, birthday = %s, position = %s, height = %s, weight = %s, education = %s
+            WHERE tname = %s AND pno = %s
+        '''
+        DB.execute_input(sql, (
+            data['name'], data['birthday'], data['position'], data['height'],
+            data['weight'], data['education'], data['tName'], data['pNo']
+        ))
+
+    @staticmethod
+    def delete_player(pNo):
+        sql = "DELETE FROM player WHERE pno = %s"
+        DB.execute_input(sql, (pNo,))
+
+    @staticmethod
+    def search_players(team=None, keyword=None, position=None):
+        sql = '''
+            SELECT tname, pno, name, position, height, weight, education
+            FROM player
+            WHERE 1=1
+        '''
+        params = []
+        if team:
+            sql += " AND tname ILIKE %s"
+            params.append(f'%{team}%')
+        if keyword:
+            sql += " AND name ILIKE %s"
+            params.append(f'%{keyword}%')
+        if position:
+            sql += " AND position ILIKE %s"
+            params.append(f'%{position}%')
+
+        sql += " ORDER BY tname"
+        return DB.fetchall(sql, tuple(params))
 
 
+# -------------------------------
+# Coach 教練管理
+# -------------------------------
+class Coach:
+    @staticmethod
+    def get_all_coaches():
+        sql = '''
+            SELECT cno, cname, birthday, tname
+            FROM coach
+            ORDER BY tname
+        '''
+        return DB.fetchall(sql)
 
+    @staticmethod
+    def get_coach(cNo):
+        sql = '''
+            SELECT cno, cname, birthday, tname
+            FROM coach
+            WHERE cno = %s
+        '''
+        return DB.fetchone(sql, (cNo,))
+
+    @staticmethod
+    def add_coach(data):
+        sql = '''
+            INSERT INTO coach (cno, cname, birthday, tname)
+            VALUES (%s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            data['cNo'], data['cName'], data['birthday'], data['tName']
+        ))
+
+    @staticmethod
+    def update_coach(data):
+        sql = '''
+            UPDATE coach
+            SET cname = %s, birthday = %s, tname = %s
+            WHERE cno = %s
+        '''
+        DB.execute_input(sql, (
+            data['cName'], data['birthday'], data['tName'], data['cNo']
+        ))
+
+    @staticmethod
+    def delete_coach(cNo):
+        sql = "DELETE FROM coach WHERE cno = %s"
+        DB.execute_input(sql, (cNo,))
+
+
+# -------------------------------
+# Game 賽局管理
+# -------------------------------
 class Game:
     @staticmethod
     def get_all_games():
         sql = '''
-              SELECT winTeam, loseTeam, date, fName
-              FROM game
-              ORDER BY date DESC \
-              '''
+            SELECT winteam, loseteam, date, fname
+            FROM game
+            ORDER BY date DESC
+        '''
         return DB.fetchall(sql)
-
-    @staticmethod
-    def search_games(team=None, field=None, date=None):
-        """
-        搜尋比賽資料，可依球隊名稱、球場名稱、比賽日期過濾
-        未填的欄位會忽略
-        """
-        sql = "SELECT winTeam, loseTeam, date, fName FROM game WHERE 1=1"
-        params = []
-
-        # 球隊名稱模糊搜尋
-        if team:
-            sql += " AND (winTeam LIKE %s OR loseTeam LIKE %s)"
-            params.extend([f"%{team}%", f"%{team}%"])
-
-        # 球場名稱模糊搜尋
-        if field:
-            sql += " AND fName LIKE %s"
-            params.append(f"%{field}%")
-
-        # 比賽日期精確搜尋
-        if date:
-            sql += " AND date = %s"
-            params.append(date)
-
-        sql += " ORDER BY date DESC"
-
-        # 回傳查詢結果
-        return DB.fetchall(sql, tuple(params))
 
     @staticmethod
     def get_more_info(winTeam, loseTeam, date):
         sql = '''
-              SELECT winTeam, loseTeam, date, fName, result
-              FROM game
-              WHERE winTeam = %s \
-                AND loseTeam = %s \
+            SELECT winteam, loseteam, date, fname, result
+            FROM game
+            WHERE winteam = %s AND loseteam = %s AND date = %s
+        '''
+        return DB.fetchone(sql, (winTeam, loseTeam, date))
+
+    @staticmethod
+    def search_games(team=None, field=None, date=None):
+        sql = "SELECT winteam, loseteam, date, fname FROM game WHERE 1=1"
+        params = []
+        if team:
+            sql += " AND (winteam ILIKE %s OR loseteam ILIKE %s)"
+            params.extend([f"%{team}%", f"%{team}%"])
+        if field:
+            sql += " AND fname ILIKE %s"
+            params.append(f"%{field}%")
+        if date:
+            sql += " AND date = %s"
+            params.append(date)
+        sql += " ORDER BY date DESC"
+        return DB.fetchall(sql, tuple(params))
+
+    @staticmethod
+    def add_game(data):
+        sql = '''
+            INSERT INTO game (winteam, loseteam, date, fname, result)
+            VALUES (%s, %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            data['winTeam'], data['loseTeam'], data['date'], data['fName'], data['result']
+        ))
+
+    @staticmethod
+    def update_game(data):
+        sql = '''
+              UPDATE game
+              SET winteam  = %s,
+                  loseteam = %s,
+                  date     = %s,
+                  fname    = %s,
+                  result   = %s
+              WHERE winteam = %s \
+                AND loseteam = %s \
                 AND date = %s \
               '''
-        winTeam = f"{winTeam}"
-        loseTeam = f"{loseTeam}"
-        date = f"{date}"
-        return DB.fetchall(sql, (winTeam, loseTeam, date))
+        DB.execute_input(sql, (
+            data['winTeam'], data['loseTeam'], data['date'],
+            data['fName'], data['result'],
+            data['oldWinTeam'], data['oldLoseTeam'], data['oldDate']
+        ))
+
+    @staticmethod
+    def delete_game(winTeam, loseTeam, date):
+        sql = "DELETE FROM game WHERE winteam = %s AND loseteam = %s AND date = %s"
+        DB.execute_input(sql, (winTeam, loseTeam, date))
 
 

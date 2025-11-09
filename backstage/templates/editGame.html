@@ -1,0 +1,30 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">編輯賽局資料</h3>
+  <form method="POST">
+    <div class="mb-2">
+      <label class="form-label">勝隊</label>
+      <input type="text" class="form-control" name="winTeam" value="{{ data.winTeam }}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">敗隊</label>
+      <input type="text" class="form-control" name="loseTeam" value="{{ data.loseTeam }}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">比賽日期</label>
+      <input type="text" class="form-control" name="date" value="{{ data.date }}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">球場</label>
+      <input type="text" class="form-control" name="fName" value="{{ data.fName }}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">比數結果</label>
+      <input type="text" class="form-control" name="result" value="{{ data.result }}">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">儲存修改</button>
+    <a href="{{ url_for('manager.gameManager') }}" class="btn btn-secondary mt-3">返回</a>
+  </form>
+</div>
+{% endblock %}

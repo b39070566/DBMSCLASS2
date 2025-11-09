@@ -1,0 +1,46 @@
+{% extends "backstage.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-3">球員管理</h3>
+  <form method="POST">
+    <input type="hidden" name="add" value="1">
+    <div class="row mb-2">
+      <div class="col"><input class="form-control" name="tName" placeholder="所屬隊伍"></div>
+      <div class="col"><input class="form-control" name="pNo" placeholder="球員編號"></div>
+      <div class="col"><input class="form-control" name="name" placeholder="姓名"></div>
+      <div class="col"><input class="form-control" name="position" placeholder="守備位置"></div>
+      <div class="col"><input class="form-control" name="height" placeholder="身高"></div>
+      <div class="col"><input class="form-control" name="weight" placeholder="體重"></div>
+      <div class="col"><input class="form-control" name="education" placeholder="學歷"></div>
+      <div class="col"><button class="btn btn-success w-100" type="submit">新增</button></div>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead><tr><th>球隊</th><th>編號</th><th>姓名</th><th>位置</th><th>身高</th><th>體重</th><th>學歷</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for player in player_data %}
+      <tr>
+        <td>{{ player.tName }}</td>
+        <td>{{ player.pNo }}</td>
+        <td>{{ player.name }}</td>
+        <td>{{ player.position }}</td>
+        <td>{{ player.height }}</td>
+        <td>{{ player.weight }}</td>
+        <td>{{ player.education }}</td>
+        <td>
+          <form method="POST" style="display:inline;">
+            <button class="btn btn-sm btn-danger" name="delete" value="{{ player.pNo }}">刪除</button>
+            <input type="hidden" name="tName" value="{{ player.tName }}">
+          </form>
+          <form method="POST" style="display:inline;">
+            <button class="btn btn-sm btn-primary" name="edit" value="{{ player.pNo }}">編輯</button>
+            <input type="hidden" name="tName" value="{{ player.tName }}">
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
