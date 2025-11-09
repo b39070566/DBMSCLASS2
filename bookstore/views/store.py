@@ -13,14 +13,14 @@ from sqlalchemy import null
 from link import *
 import math
 from base64 import b64encode
-from api.sql import Member, Order_List, Product, Record, Cart
+# 導入 DB class，這樣我們才能修復 bookstore() 裡的錯誤
+from api.sql import Member, Order_List, Product, Record, Cart, DB
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
 @store.route('/', methods=['GET', 'POST'])
 @login_required
 def bookstore():
-    # ... (你原有的 bookstore() 函式，完全不變) ...
     result = Product.count()
     count = math.ceil(result[0]/9)
     flag = 0
@@ -39,10 +39,12 @@ def bookstore():
         search = request.values.get('keyword')
         keyword = search
         
-        # 假設你這裡的 cursor 是從 link.py 導入的
-        from link import cursor # 
-        cursor.execute('SELECT * FROM PRODUCT WHERE PNAME LIKE %s', ('%' + search + '%',))
-        book_row = cursor.fetchall()
+        # --- 修正 ---
+        # 錯誤的 cursor.execute() 已被替換
+        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s" # ILIKE = 不分大小寫
+        book_row = DB.fetchall(sql, ('%' + search + '%',))
+        # --- 結束修正 ---
+        
         book_data = []
         final_data = []
         
@@ -119,9 +121,12 @@ def bookstore():
         search = request.values.get('keyword')
         keyword = search
         
-        from link import cursor # 
-        cursor.execute('SELECT * FROM PRODUCT WHERE PNAME LIKE %s', ('%' + search + '%',))
-        book_row = cursor.fetchall()
+        # --- 修正 ---
+        # 錯誤的 cursor.execute() 已被替換
+        sql = "SELECT pid, pname, price FROM product WHERE pname ILIKE %s" # ILIKE = 不分大小寫
+        book_row = DB.fetchall(sql, ('%' + search + '%',))
+        # --- 結束修正 ---
+        
         book_data = []
         total = 0
         
@@ -157,23 +162,14 @@ def bookstore():
         
         return render_template('bookstore.html', book_data=book_data, user=current_user.name, page=1, flag=flag, count=count)
 
-# --- 這是我加入的 /gamelist (先留著) ---
-@store.route('/gamelist')
-@login_required 
-def gamelist():
-    if (current_user.role == 'manager'):
-        flash('No permission')
-        return redirect(url_for('manager.home'))
-    return render_template('gamelist.html', user=current_user.name)
-# ---
+# --- 我把多餘的 /gamelist 刪掉了 ---
 
 # 會員購物車
 @store.route('/cart', methods=['GET', 'POST'])
 @login_required # 使用者登入後才可以看
 def cart():
-    # ----------------------------------------------------------------
-  
-    try: # <--- 這是新加入的
+    # --- 保留了 try...except 作為安全網 ---
+    try:
         # 以防管理者誤闖
         if request.method == 'GET':
             if (current_user.role == 'manager'):
@@ -191,21 +187,17 @@ def cart():
                     data = Cart.get_cart(current_user.id)
 
                 tno = data[2] # 取得交易編號
-                pid = request.form.get('pid') # 使用者想要購買的東西，使用 `request.form.get()` 來避免 KeyError
+                pid = request.form.get('pid') # 使用者想要購買的東西
                 if not pid:
                     flash('Product ID is missing.')
-                    return redirect(url_for('bookstore.cart')) # 返回購物車頁面並顯示錯誤信息
+                    return redirect(url_for('bookstore.cart')) 
 
-                # 檢查購物車裡面有沒有商品
                 product = Record.check_product(pid, tno)
-                # 取得商品價錢
                 price = Product.get_product(pid)[2]
 
-                # 如果購物車裡面沒有的話，把它加一個進去
                 if product is None:
                     Record.add_product({'pid': pid, 'tno': tno, 'saleprice': price, 'total': price})
                 else:
-                    # 如果購物車裡面有的話，就多加一個進去
                     amount = Record.get_amount(tno, pid)
                     total = (amount + 1) * int(price)
                     Record.update_product({'amount': amount + 1, 'tno': tno, 'pid': pid, 'total': total})
@@ -213,9 +205,7 @@ def cart():
             elif "delete" in request.form:
                 pid = request.form.get('delete')
                 tno = Cart.get_cart(current_user.id)[2]
-
                 Member.delete_product(tno, pid)
-                # product_data = only_cart() # <--- 這裡不需要再呼叫
 
             elif "user_edit" in request.form:
                 change_order()
@@ -244,7 +234,6 @@ def cart():
         else:
             return render_template('cart.html', data=product_data, user=current_user.name)
             
-    # ----------------------------------------------------------------
     except Exception as e:
         # 如果 above 任何程式碼 (尤其是 only_cart()) 失敗了
         print(f"!!! CRITICAL ERROR in cart() route: {e}")
@@ -256,7 +245,6 @@ def cart():
 
 @store.route('/order')
 def order():
-    # ... (你原有的 order() 函式，完全不變) ...
     data = Cart.get_cart(current_user.id)
     tno = data[2]
 
@@ -269,18 +257,25 @@ def order():
             '商品編號': i[1],
             '商品名稱': pname,
             '商品價格': i[3],
-            '數量': iG[2]
+            # --- 
+            # 
+            # 
+            # 
+            # --- 
+            '數量': i[2] # <--- 這裡是我上次打錯的地方，現已修正
+            # 
+            # 
+            # 
+            # ---
         }
         product_data.append(product)
     
     total = float(Record.get_total(tno)) # 將 Decimal 轉換為 float
 
-
     return render_template('order.html', data=product_data, total=total, user=current_user.name)
 
 @store.route('/orderlist')
 def orderlist():
-    # ... (你原有的 orderlist() 函式，完全不變) ...
     if "oid" in request.args :
         pass
     
@@ -309,11 +304,9 @@ def orderlist():
         }
         orderdetail.append(temp)
 
-
     return render_template('orderlist.html', data=orderlist, detail=orderdetail, user=current_user.name)
 
 def change_order():
-    # ... (你原有的 change_order() 函式，完全不變) ...
     data = Cart.get_cart(current_user.id)
     tno = data[2] # 使用者有購物車了，購物車的交易編號是什麼
     product_row = Record.get_record(data[2])
@@ -334,7 +327,6 @@ def change_order():
 
 
 def only_cart():
-    # ... (你原有的 only_cart() 函式，完全不變) ...
     count = Cart.check(current_user.id)
 
     if count is None:
