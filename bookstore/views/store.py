@@ -14,7 +14,7 @@ from link import *
 import math
 from base64 import b64encode
 # 導入 DB class
-from api.sql import Member, Order_List, Product, Record, Cart, DB
+from api.sql import Member, Order_List, Product, Record, Cart, Player, Team, Game
 
 store = Blueprint('bookstore', __name__, template_folder='../templates')
 
