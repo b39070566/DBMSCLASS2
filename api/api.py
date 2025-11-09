@@ -4,7 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from link import *
 from api.sql import *
 #--------------------------------------
-
+from sql import get_team_records_sql
 #--------------------------------------
 
 api = Blueprint('api', __name__, template_folder='./templates')
@@ -93,3 +93,21 @@ def logout():
     return redirect(url_for('index'))
 
 #-------------------------------------------
+@api.route('/records', methods=['GET'])
+def get_team_records():
+    try:
+        # 使用 sql.py 裡的 DB.fetchall() 來執行 SQL
+        rows = DB.fetchall(get_team_records_sql)
+        
+        # 你的 SQL 欄位名稱
+        columns = ['team_name', 'wins', 'losses', 'win_rate', 'games_behind']
+        
+        # 將資料 (rows) 轉換為字典 (JSON)
+        data = [dict(zip(columns, row)) for row in rows]
+        
+        return jsonify(data)
+        
+    except Exception as e:
+        print(f"Error fetching team records: {e}")
+        return jsonify({"error": str(e)}), 500
+#-----------------------------------------------
