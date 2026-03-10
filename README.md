@@ -1,84 +1,145 @@
-# 中山網路書店
+這是一份為您的資料庫專案量身打造的 GitHub `README.md` 檔案草稿，您可以直接將其複製並貼上到您的版本控制庫中：
 
-[![GitHub release](https://img.shields.io/github/release/Text-Analytics-and-Retrieval/db_class2023)](https://github.com/Text-Analytics-and-Retrieval/db_class2023/releases/latest)
-[![GitHub license](https://img.shields.io/github/license/Text-Analytics-and-Retrieval/db_class2023)](https://github.com/Text-Analytics-and-Retrieval/db_class2023/main/LICENSE)
+# CPBL 戰績系統 (CPBL Standings System)
 
-一套使用Flask開發的網路書店系統，後端使用Postgres資料庫
+設計一個中華職棒聯盟的戰績系統（假設性的迷你世界），該系統可以記載球隊資訊和比賽記錄 。
 
-## 功能
 
-- 提供CRUD範例，並搭配資料分析功能。
-- 以MVC架構開發。
-- 一般消費者可以瀏覽、搜尋、購買商品，並查看訂單狀態。
-- 後台管理者可以編輯商品，並檢視每筆訂單以及商品銷售圖表。
 
-## 介面範例
-![image](https://user-images.githubusercontent.com/52253495/226426951-b1ef62d0-56ae-443f-9483-c06524b5fb12.png)
-> 點選以下連結體驗系統功能: https://bookstore.tarflow.com/
-## 安裝
+## 🛠️ 開發工具與技術棧
 
-### 0. 進入終端機
+* 
+**資料庫**: PostgreSQL / pgAdmin 
 
-### 1. 取得原始碼
 
-```bash
-# 從 Github 拉取原始碼
-git clone https://github.com/Text-Analytics-and-Retrieval/DB_CLASS_2025.git
-cd DB_CLASS_2025/
-```
+* 
+**後端開發**: Python (包含 `app.py`, `api.py`, `sql.py` 等模組 )
 
-### 2. 建立環境
-注意：請先安裝 [anaconda](https://www.anaconda.com/download) 再進行後續的步驟
-```bash!
-# 1. `db-2025` 可改為自訂的環境名稱
-# 2. 同學也可以自訂 `python=...` 的版本，但要注意3.11版會有版本衝突的問題，不建議使用
-conda create -n db-2025 python=3.10
 
-# 3. 啟動 conda 環境
-conda activate db-2025
+* 
+**前端視圖**: HTML / CSS (搭配後端模板如 `frontstage.html`, `race.html` 等 )
 
-# 4. 這時候可以在終端機看到類似 
-# (db-2025) user@userMacBook-Pro directory %
-```
 
-### 3. 安裝環境
+* 
+**版本控制**: GitHub 
 
-##### 安裝python套件
 
-```bash
-# 1. 請確認已啟動 conda 環境
-# 2. 請確認 `requirements.txt` 檔案位於當前目錄
-pip install -r requirements.txt
-```
+* 
+**開發環境**: Visual Studio Code 
 
-##### 修改連線資訊
 
-```bash
-# 1. 找到 .env.example 檔案
-# 2. 注意：複製 .env.example 建立一個新的 .env 檔案
-# 3. 根據各組的連線資訊修改 .env 內容參數
-DB_USER=... 
-DB_PASSWORD=...
-DB_HOST=...
-DB_PORT=...
-DB_NAME=...
-```
+* 
+**部署平台**: Render 
 
-### 4. 匯入SQL
-參考資料: [Link](https://learningsky.io/use-postgresql-databases-with-the-pgadmin/)
-- 打開 ebook.sql
-- 將 SQL 檔裡面的程式碼 貼到 自己組別的資料庫內執行(在自己組別的資料庫點右鍵選Query Tool)並執行
 
-### 5. 啟動程式
 
-```bash
-python app.py
-倘若遇到 OSError: [Errno 98] Address already in use  像這樣的錯誤代表有重複執行的問題
-請輸入 lsof -i :5000 查看是哪個PID使用中，並再輸入kill -9 <該執行中的PID> 刪除
-```
+## 🌟 系統功能 (Functional Map)
 
-## 使用
+系統主要分為五大頁面架構：帳號註冊/登入、戰績查詢(首頁)、隊伍查詢、人員查詢(點將錄) 以及 後臺功能(管理) 。
 
-- 輸入點選running on後面的網址，進入首頁。![2024-10-12 13-30-04 的螢幕擷圖](https://github.com/user-attachments/assets/da1cb799-b40d-4604-8035-10294bf8867c)
-- 首次使用請點選註冊按鈕，並註冊帳號。
-- 註冊後，點選登入即可進入頁面。
+### 前端使用者功能
+
+* 
+**帳號設定**: 提供會員註冊與登入功能 。
+
+
+* 
+**戰績查詢**: 統計並顯示各球隊的出賽數、勝敗場、勝率與勝差 。
+
+
+* 
+**賽局查詢**: 檢視過往比分與詳細比賽資訊 。
+
+
+* 
+**隊伍查詢**: 查看隊伍基本資料、所屬隊員與教練資訊 。
+
+
+* 
+**人員查詢 (點將錄)**: 提供球員與教練的詳細資料檢閱 。
+
+
+
+### 後台管理端功能
+
+* 
+**隊伍管理**: 增刪改查（CRUD）隊伍名稱、公司聯絡資訊與主場設定 。
+
+
+* 
+**球員管理**: 編輯球員的背號、姓名、生日、守備位置、身高、體重與學歷 。
+
+
+* 
+**教練管理**: 編輯教練編號、姓名與所屬隊伍等資訊 。
+
+
+* 
+**賽局管理**: 記錄並編輯比賽日期、勝敗隊伍與比賽場地 。
+
+
+* 
+**場地管理**: 維護球場名稱與地址清單 。
+
+
+
+## 🗄️ 資料庫設計 (Entities)
+
+本系統的關聯式資料庫包含以下核心資料表 ：
+
+* 
+**Team (球隊)**: 記錄隊名、總教練、所屬公司名稱、公司電話與地址 。
+
+
+* 
+**Coach (教練)**: 記錄教練號碼、姓名與生日 。
+
+
+* 
+**Player (球員)**: 記錄球衣號碼、姓名、生日、位置、身高、體重與學歷，每一球員必須隸屬於一個球隊 。
+
+
+* 
+**Game (比賽)**: 記錄勝隊、敗隊、比賽日期、比數與比賽球場 。
+
+
+* 
+**Field (球場)**: 記錄球場 ID、名稱與地址 。
+
+
+
+## 🚀 系統部署與測試帳號
+
+* 
+**系統網址**: [https://dbmsclass2.onrender.com](https://dbmsclass2.onrender.com) 
+
+
+* 
+**注意事項**: 免費伺服器跳轉喚醒時間需等待一分鐘左右 。
+
+
+
+**測試帳號資訊**:
+
+* **前端使用者端 (賽局查詢、戰績、點將錄)**:
+* 帳號: `M144020015` 
+
+
+* 密碼: `0125` 
+
+
+
+
+* **後台管理端 (各項資料增減維護)**:
+* 帳號: `admin` 
+
+
+* 密碼: `12345` 
+
+
+
+
+
+---
+
+需要我為您進一步撰寫這個專案的其他說明文件，或是準備要寫進履歷的專案亮點描述嗎？
