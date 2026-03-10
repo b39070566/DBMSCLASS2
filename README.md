@@ -5,7 +5,7 @@
 
 ## 開發工具與技術棧
 
-本系統的後端開發採用 Python ，搭配 HTML 與 CSS 建構前端視圖 。資料庫管理系統使用 PostgreSQL 並以 pgAdmin 進行操作 。開發環境主要在 Visual Studio Code 中進行 ，版本控制依賴 GitHub ，最後將專案部署至 Render 平台 。
+本系統的後端開發採用 Python Django ，搭配 HTML 與 CSS 建構前端視圖 。資料庫管理系統使用 PostgreSQL 並以 pgAdmin 進行操作 。開發環境主要在 Visual Studio Code 中進行 ，版本控制依賴 GitHub ，最後將專案部署至 Render 平台 。
 
 ## 系統功能
 
